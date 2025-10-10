@@ -47,12 +47,19 @@ export const ABOUT_ROUTES = {
     SCREEN: "about",
     COLOR: "#FFAFAF",
   },
+  // CONSENT: {
+  //   URI: LocalImages.codeIcon,
+  //   CARD: "AcceptableUsePolicy",
+  //   TITLE: "Consent",
+  //   SCREEN: "code",
+  //   COLOR: "#ffcdb2",
+  // },
   TERMS: {
     URI: LocalImages.termsImage,
     CARD: "AcceptableUsePolicy",
     TITLE: SCREENS.DRAWERMENUTITLES.TERM_CONDITION,
     SCREEN: "terms",
-    COLOR: "#D7EFFB",
+    COLOR: "#cce3de",
   },
   IDENTITY: {
     RIGHT_ICON: LocalImages.sideArrowImage,
@@ -62,14 +69,14 @@ export const ABOUT_ROUTES = {
     SCREEN: "AuthBackupIdentity",
     COLOR: "#FFDD9B",
   },
-  PAYMENT: {
-    RIGHT_ICON: LocalImages.sideArrowImage,
-    URI: LocalImages.paymentshand,
-    CARD: "Payment",
-    TITLE: SCREENS.DRAWERMENUTITLES.PAYMENT,
-    SCREEN: "Payment",
-    COLOR: "#90EE90",
-  },
+  // PAYMENT: {
+  //   RIGHT_ICON: LocalImages.sideArrowImage,
+  //   URI: LocalImages.paymentshand,
+  //   CARD: "Payment",
+  //   TITLE: SCREENS.DRAWERMENUTITLES.PAYMENT,
+  //   SCREEN: "Payment",
+  //   COLOR: "#90EE90",
+  // },
   DELETE: {
     URI: LocalImages.deleteImage,
     CARD: "AcceptableUsePolicy",
@@ -92,6 +99,13 @@ export const ABOUT_ROUTES = {
   //   SCREEN: "Dev",
   //   COLOR: "#C5BDF6",
   // },
+   CODE: {
+    URI: LocalImages.codeIcon,
+    CARD: "AcceptableUsePolicy",
+    TITLE: "Have a Code?",
+    SCREEN: "code",
+    COLOR: "#ffcdb2",
+  },
 };
 
 export const SETTING_LIST = [
@@ -111,4 +125,20 @@ export const SETTING_LIST = [
     RIGHT_ICON: LocalImages.sideArrowImage,
     COLOR: "#FFDD9B",
   },
+  {
+    CARD: "consent",
+    TITLE: "Consent",
+    URI: LocalImages.termsImage,
+    SCREEN: "Consent",
+    RIGHT_ICON: LocalImages.sideArrowImage,
+    COLOR: "#cce3de",
+  },
+  // {
+  //   CARD: "backup",
+  //   TITLE: "Backup & Recovery",
+  //   URI: LocalImages.backupicon,
+  //   SCREEN: "Dev4",
+  //   RIGHT_ICON: LocalImages.sideArrowImage,
+  //   COLOR: "#C5BDF6",
+  // },
 ];

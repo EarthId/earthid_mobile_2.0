@@ -63,9 +63,9 @@ const Payment = (props) => {
     setLoading(true);
     var documentDetails: IDocumentProps = {
       id: `ID_VERIFICATION${Math.random()}${"selectedDocument"}${Math.random()}`,
-      name: "Proof of funds",
+      name: "Proof of Funds",
       path: "filePath",
-      documentName: "Proof of funds",
+      documentName: "Proof of Funds",
       categoryType: "Finance",
       date: date?.date,
       time: date?.time,
@@ -90,7 +90,7 @@ const Payment = (props) => {
         setLoading(false);
         showPopup(
           "Success",
-          "Proof of funds successfully generated.",
+          "Proof of Funds successfully generated.",
           [{ text: "OK", onPress: () => setPopupVisible(false) }]
         );
         props.navigation.navigate("Documents");
@@ -101,8 +101,8 @@ const Payment = (props) => {
   const generateBasicToken = async () => {
     try {
 //MasterCard Keys
-      const key = OPEN_BANK_KEYS_MASTERCARD.Client_Id;
-  const secret = OPEN_BANK_KEYS_MASTERCARD.Client_Secret;
+      const key = OPEN_BANK_KEYS_WOCCU.Client_Id;
+  const secret = OPEN_BANK_KEYS_WOCCU.Client_Secret;
       // Concatenate the key and secret with a colon
       const combined = `${key}:${secret}`;
       

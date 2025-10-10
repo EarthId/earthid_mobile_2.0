@@ -16,6 +16,7 @@ import { Text } from 'react-native';
 import { addConsent } from "../../utils/consentApis";
 import CustomPopup from "../../components/Loader/customPopup";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import moment from 'moment';
 const data = [
   { label: " 1", value: "1" },
   { label: " 2", value: "2" },
@@ -57,66 +58,118 @@ export const QrScannerMaskedWidget = ({ createVerifiableCredentials,
 
   const [dob, setDob] = useState<string | null>(null);
 
+  const request = barCodeDataDetails?.requestType?.request;
+const isMinAge = request === 'minAge';
+const isAgeRange = request === 'ageRange';
+const isBalance = request === 'balance';
+
   useEffect(() => {
+     if (isBalance) {
+      console.log('got is Balance')
+    // no need to fetch DOB for balance requests
+    return;
+  }
     const fetchDOB = async () => {
       try {
-        const storedDob = await AsyncStorage.getItem("userDOB");
-        if (storedDob !== null) {
-          setDob(storedDob);
+        const datas = documentsDetailsList?.responseData ?? [];
+  
+        // Try to find Proof of Age VC
+        const proofOfAgeDoc = datas.find(item =>
+          item.isVc && item.documentName === 'Proof of Age'
+        );
+  
+        let extractedDOB = null;
+  
+        if (proofOfAgeDoc && proofOfAgeDoc.verifiableCredential) {
+          const vc = proofOfAgeDoc.verifiableCredential;
+          const subject =
+            Array.isArray(vc.credentialSubject) && vc.credentialSubject.length > 0
+              ? vc.credentialSubject[0]
+              : vc.credentialSubject;
+  
+          extractedDOB = subject?.dateOfBirth;
+          console.log('this is the subject:', subject)
+          // if (extractedDOB) {
+          //   console.log('DOB extracted from VC:', extractedDOB);
+          //   setDob(extractedDOB);
+          //   return; // Exit early if DOB found from VC
+          // }
         }
-        console.log('This is data------', storedDob);
+  
+        // Fallback to AsyncStorage if not found in VC
+        const storedDob = await AsyncStorage.getItem("userDOB");
+        if (storedDob) {
+          console.log('DOB fallback from AsyncStorage:', storedDob);
+
+  // Check if DOB is already in YYYY/MM/DD format using regex
+  const isFormatted = /^\d{4}\/\d{2}\/\d{2}$/.test(storedDob);
+
+  let formattedDob = storedDob;
+
+  if (!isFormatted) {
+    // Try parsing various common formats
+    const parsed = moment(storedDob, ["YYYYMMDD", "YYYY-MM-DD", "DD-MM-YYYY", "MM-DD-YYYY"], true);
+    if (parsed.isValid()) {
+      formattedDob = parsed.format("YYYY/MM/DD");
+    } else {
+      console.warn("Invalid DOB format, fallback not applied:", storedDob);
+    }
+  }
+
+  setDob(formattedDob);
+        }
+  
       } catch (error) {
-        console.error('Error fetching userDOB from AsyncStorage', error);
+        console.error('Error fetching DOB from VC or AsyncStorage', error);
       }
     };
-
+  
     fetchDOB();
-  }, []); // Empty dependency array ensures the effect runs once on mount
+  }, [documentsDetailsList, barCodeDataDetails]);
+  
 
 
   useEffect(() => {
-    const datas = documentsDetailsList?.responseData ?? [];
-    const requiredDocument = barCodeDataDetails?.requestType?.request === 'minAge' ? 'Proof of age' : 'Proof of funds';
+  const datas = documentsDetailsList?.responseData ?? [];
+  const requiredDocument = (isMinAge || isAgeRange) ? 'Proof of Age' : 'Proof of Funds';
 
-    // Check if the required document is not present in the wallet
-    const requiredDocumentNotPresent = datas.every(item => !(item.isVc && item?.documentName === requiredDocument));
+  const requiredDocumentNotPresent = datas.every(item => !(item.isVc && item.documentName === requiredDocument));
 
-    if (datas.length === 0 || requiredDocumentNotPresent) {
-      showPopup(
-        "No Documents",
-        "Please add the required documents",
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              setPopupVisible(false);
-              navigation.navigate("Documents");
-            }
+  if (datas.length === 0 || requiredDocumentNotPresent) {
+    showPopup(
+      "No Documents",
+      "Please add the required documents",
+      [
+        {
+          text: "OK",
+          onPress: () => {
+            setPopupVisible(false);
+            navigation.navigate("Documents");
           }
-        ]
-      );
-    }
-  }, [documentsDetailsList, barCodeDataDetails]);
+        }
+      ]
+    );
+  }
+}, [documentsDetailsList, barCodeDataDetails]);
+
 
 
   const getDropDownList = () => {
-    //let datas = [];
-    let datas = documentsDetailsList?.responseData ?? [];
-    if (barCodeDataDetails?.requestType?.request === 'minAge') {
+  let datas = documentsDetailsList?.responseData ?? [];
 
-      datas = datas?.filter((item: { isVc: any }) => item.isVc && item?.documentName === 'Proof of age');
-      return datas;
-    }
-    else if (barCodeDataDetails?.requestType?.request === 'balance') {
+  if (isMinAge || isAgeRange) {
+    // Only proof of age docs
+    return datas.filter(item => item.isVc && item.documentName === 'Proof of Age');
+  }
 
-      datas = datas?.filter((item: { isVc: any }) => {
-        console.log('times', item?.documentName)
-        return item.isVc && item?.documentName === 'Proof of funds'
-      });
-      return datas;
-    }
-    return datas;
-  };
+  if (isBalance) {
+    // Only proof of funds docs
+    console.log('Got proof of funds!!')
+    return datas.filter(item => item.isVc && item.documentName === 'Proof of Funds');
+  }
+
+  return datas;
+};
 
 
   const checkDisable = () => {
@@ -263,7 +316,10 @@ export const QrScannerMaskedWidget = ({ createVerifiableCredentials,
                 fontSize: 14,
               }}
             >
-              {barCodeDataDetails?.requestType?.request === 'minAge' ? 'Your exact date of birth will not be disclosed. This verifier can only confirm that your age falls within the specified range.' : "Your exact income amount will not be disclosed. This verifier can only confirm that your balance falls within the specified range."}
+              {(isMinAge || isAgeRange)
+  ? 'Your exact date of birth will not be disclosed. This verifier can only confirm that your age falls within the specified range.'
+  : "Your exact income amount will not be disclosed. This verifier can only confirm that your balance falls within the specified range."}
+
             </GenericText>
             <ScrollView
               style={{ flexGrow: 1 }}
@@ -347,62 +403,24 @@ export const QrScannerMaskedWidget = ({ createVerifiableCredentials,
                               </View>
                             </View>
                             <View style={{ flexDirection: 'row' }}>
-                              <GenericText
-                                style={{
+                              <GenericText style={{ padding: 5, color: "#000", fontSize: showVisibleDOB ? 14 : 25, fontWeight: 'bold' }}>
+  { (isMinAge || isAgeRange)
+      ? (showVisibleDOB ? dob : '..../../..')
+      : (showVisibleBalance ? "$ " + item?.amount : '$_ _ _ _')
+  }
+</GenericText>
 
-                                  padding: 5,
-                                  color: "#000",
-                                  fontSize: showVisibleDOB ? 14 : 25,
-                                  fontWeight: 'bold',
-
-                                }}
-                              >
-                                {barCodeDataDetails?.requestType?.request === 'minAge' ? showVisibleDOB ? dob : '..../../..' : showVisibleBalance ? "$ " + item?.amount : '$_ _ _ _'}
-                              </GenericText>
-
-                              <TouchableOpacity onPress={() => barCodeDataDetails?.requestType?.request === 'minAge' ? setshowVisibleDOB(!showVisibleDOB) : setshowVisibleBalance(!showVisibleBalance)}>
-
-                                {barCodeDataDetails?.requestType?.request === 'minAge' ? <GenericText
-                                  style={{
-                                    marginTop: 5,
-                                    padding: 5,
-                                    color: "#0163f7",
-                                    fontSize: 10,
-                                    fontWeight: "600",
-
-                                  }}
-                                >
-                                  {!showVisibleDOB ? 'VIEW' : 'HIDE'}
-                                </GenericText> :
-                                  <GenericText
-                                    style={{
-                                      marginTop: 5,
-                                      padding: 5,
-                                      color: "#0163f7",
-                                      fontSize: 10,
-                                      fontWeight: "600",
-
-                                    }}
-                                  >
-                                    {!showVisibleBalance ? 'VIEW' : 'HIDE'}
-                                  </GenericText>}
-
-                              </TouchableOpacity>
+                             <TouchableOpacity onPress={() => (isMinAge || isAgeRange) ? setshowVisibleDOB(!showVisibleDOB) : setshowVisibleBalance(!showVisibleBalance)}>
+  <GenericText style={{ marginTop: 5, padding: 5, color: "#0163f7", fontSize: 10, fontWeight: "600" }}>
+    { (isMinAge || isAgeRange) ? (!showVisibleDOB ? 'VIEW' : 'HIDE') : (!showVisibleBalance ? 'VIEW' : 'HIDE') }
+  </GenericText>
+</TouchableOpacity>
 
                             </View>
 
-                            <GenericText
-                              style={{
-
-                                padding: 5,
-                                color: "#6c757d",
-                                fontSize: 14,
-                                fontWeight: "700",
-
-                              }}
-                            >
-                              {barCodeDataDetails?.requestType?.request === 'minAge' ? 'Date of birth' : 'Balance'}
-                            </GenericText>
+                            <GenericText style={{ padding: 5, color: "#6c757d", fontSize: 14, fontWeight: "700" }}>
+  { (isMinAge || isAgeRange) ? 'Date of birth' : 'Balance' }
+</GenericText>
                           </View>
 
                         );

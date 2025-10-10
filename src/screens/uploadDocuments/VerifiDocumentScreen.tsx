@@ -198,9 +198,9 @@ fetch(apiUrl, {
           : [];
         var documentDetails1: IDocumentProps = {
           id: `ID_VERIFICATION${Math.random()}${"selectedDocument"}${Math.random()}`,
-          name: "Proof of age",
+          name: "Proof of Age",
           path: "filePath",
-          documentName: "Proof of age",
+          documentName: "Proof of Age",
           categoryType: "ID",
           date: date?.date,
           time: date?.time,
@@ -210,7 +210,7 @@ fetch(apiUrl, {
           processedDoc: "",
           isVc: true,
           vc: JSON.stringify({
-            name: "Proof of age",
+            name: "Proof of Age",
             documentName: "Acknowledgement Token",
             path: "filePath",
             date: date?.date,

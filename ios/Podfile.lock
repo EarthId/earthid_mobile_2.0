@@ -1,4 +1,10 @@
 PODS:
+  - AppAuth (2.0.0):
+    - AppAuth/Core (= 2.0.0)
+    - AppAuth/ExternalUserAgent (= 2.0.0)
+  - AppAuth/Core (2.0.0)
+  - AppAuth/ExternalUserAgent (2.0.0):
+    - AppAuth/Core
   - appcenter-analytics (5.0.1):
     - AppCenter/Analytics (~> 5.0)
     - AppCenterReactNativeShared (~> 5.0)
@@ -10,13 +16,17 @@ PODS:
     - AppCenter/Crashes (~> 5.0)
     - AppCenterReactNativeShared (~> 5.0)
     - React-Core
-  - AppCenter/Analytics (5.0.4):
+  - AppCenter/Analytics (5.0.6):
     - AppCenter/Core
-  - AppCenter/Core (5.0.4)
-  - AppCenter/Crashes (5.0.4):
+  - AppCenter/Core (5.0.6)
+  - AppCenter/Crashes (5.0.6):
     - AppCenter/Core
-  - AppCenterReactNativeShared (5.0.1):
-    - AppCenter/Core (= 5.0.4)
+  - AppCenterReactNativeShared (5.0.3):
+    - AppCenter/Core (= 5.0.6)
+  - AppCheckCore (11.2.0):
+    - GoogleUtilities/Environment (~> 8.0)
+    - GoogleUtilities/UserDefaults (~> 8.0)
+    - PromisesObjC (~> 2.4)
   - BEMCheckBox (1.4.1)
   - boost (1.83.0)
   - BVLinearGradient (2.8.3):
@@ -32,32 +42,23 @@ PODS:
     - ReactCommon/turbomodule/core (= 0.73.6)
   - fmt (6.2.1)
   - glog (0.3.5)
-  - GoogleDataTransport (9.4.1):
-    - GoogleUtilities/Environment (~> 7.7)
-    - nanopb (< 2.30911.0, >= 2.30908.0)
-    - PromisesObjC (< 3.0, >= 1.2)
-  - GoogleMLKit/FaceDetection (6.0.0):
-    - GoogleMLKit/MLKitCore
-    - MLKitFaceDetection (~> 5.0.0)
-  - GoogleMLKit/MLKitCore (6.0.0):
-    - MLKitCommon (~> 11.0.0)
-  - GoogleToolboxForMac/Defines (4.2.1)
-  - GoogleToolboxForMac/Logger (4.2.1):
-    - GoogleToolboxForMac/Defines (= 4.2.1)
-  - "GoogleToolboxForMac/NSData+zlib (4.2.1)":
-    - GoogleToolboxForMac/Defines (= 4.2.1)
-  - GoogleUtilities/Environment (7.13.3):
+  - GoogleSignIn (9.0.0):
+    - AppAuth (~> 2.0)
+    - AppCheckCore (~> 11.0)
+    - GTMAppAuth (~> 5.0)
+    - GTMSessionFetcher/Core (~> 3.3)
+  - GoogleUtilities/Environment (8.1.0):
     - GoogleUtilities/Privacy
-    - PromisesObjC (< 3.0, >= 1.2)
-  - GoogleUtilities/Logger (7.13.3):
+  - GoogleUtilities/Logger (8.1.0):
     - GoogleUtilities/Environment
     - GoogleUtilities/Privacy
-  - GoogleUtilities/Privacy (7.13.3)
-  - GoogleUtilities/UserDefaults (7.13.3):
+  - GoogleUtilities/Privacy (8.1.0)
+  - GoogleUtilities/UserDefaults (8.1.0):
     - GoogleUtilities/Logger
     - GoogleUtilities/Privacy
-  - GoogleUtilitiesComponents (1.1.0):
-    - GoogleUtilities/Logger
+  - GTMAppAuth (5.0.0):
+    - AppAuth/Core (~> 2.0)
+    - GTMSessionFetcher/Core (< 4.0, >= 3.3)
   - GTMSessionFetcher/Core (3.5.0)
   - hermes-engine (0.73.6):
     - hermes-engine/Pre-built (= 0.73.6)
@@ -67,28 +68,6 @@ PODS:
   - lottie-react-native (5.1.6):
     - lottie-ios (~> 3.4.0)
     - React-Core
-  - MLImage (1.0.0-beta5)
-  - MLKitCommon (11.0.0):
-    - GoogleDataTransport (< 10.0, >= 9.4.1)
-    - GoogleToolboxForMac/Logger (< 5.0, >= 4.2.1)
-    - "GoogleToolboxForMac/NSData+zlib (< 5.0, >= 4.2.1)"
-    - GoogleUtilities/UserDefaults (< 8.0, >= 7.13.0)
-    - GoogleUtilitiesComponents (~> 1.0)
-    - GTMSessionFetcher/Core (< 4.0, >= 3.3.2)
-  - MLKitFaceDetection (5.0.0):
-    - MLKitCommon (~> 11.0)
-    - MLKitVision (~> 7.0)
-  - MLKitVision (7.0.0):
-    - GoogleToolboxForMac/Logger (< 5.0, >= 4.2.1)
-    - "GoogleToolboxForMac/NSData+zlib (< 5.0, >= 4.2.1)"
-    - GTMSessionFetcher/Core (< 4.0, >= 3.3.2)
-    - MLImage (= 1.0.0-beta5)
-    - MLKitCommon (~> 11.0)
-  - nanopb (2.30910.0):
-    - nanopb/decode (= 2.30910.0)
-    - nanopb/encode (= 2.30910.0)
-  - nanopb/decode (2.30910.0)
-  - nanopb/encode (2.30910.0)
   - Plaid (5.4.2)
   - PromisesObjC (2.4.0)
   - RCT-Folly (2022.05.16.00):
@@ -962,17 +941,15 @@ PODS:
   - React-Mapbuffer (0.73.6):
     - glog
     - React-debug
+  - react-native-app-auth (8.0.3):
+    - AppAuth (>= 1.7.6)
+    - React-Core
   - react-native-biometrics (3.0.1):
     - React-Core
   - react-native-camera (4.2.1):
     - React-Core
     - react-native-camera/RCT (= 4.2.1)
     - react-native-camera/RN (= 4.2.1)
-  - react-native-camera/FaceDetectorMLKit (4.2.1):
-    - GoogleMLKit/FaceDetection
-    - React-Core
-    - react-native-camera/RCT
-    - react-native-camera/RN
   - react-native-camera/RCT (4.2.1):
     - React-Core
   - react-native-camera/RN (4.2.1):
@@ -986,6 +963,8 @@ PODS:
   - react-native-document-picker (9.3.1):
     - glog
     - RCT-Folly (= 2022.05.16.00)
+    - React-Core
+  - react-native-get-random-values (1.11.0):
     - React-Core
   - react-native-html-to-pdf (0.12.0):
     - React-Core
@@ -1195,6 +1174,9 @@ PODS:
     - glog
     - RCT-Folly (= 2022.05.16.00)
     - React-Core
+  - RNGoogleSignin (16.0.0):
+    - GoogleSignIn (~> 9.0)
+    - React-Core
   - RNImageCropPicker (0.41.2):
     - React-Core
     - React-RCTImage
@@ -1277,12 +1259,13 @@ DEPENDENCIES:
   - React-jsinspector (from `../node_modules/react-native/ReactCommon/jsinspector-modern`)
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
+  - react-native-app-auth (from `../node_modules/react-native-app-auth`)
   - react-native-biometrics (from `../node_modules/react-native-biometrics`)
   - react-native-camera (from `../node_modules/react-native-camera`)
-  - react-native-camera/FaceDetectorMLKit (from `../node_modules/react-native-camera`)
   - "react-native-cameraroll (from `../node_modules/@react-native-camera-roll/camera-roll`)"
   - react-native-date-picker (from `../node_modules/react-native-date-picker`)
   - react-native-document-picker (from `../node_modules/react-native-document-picker`)
+  - react-native-get-random-values (from `../node_modules/react-native-get-random-values`)
   - react-native-html-to-pdf (from `../node_modules/react-native-html-to-pdf`)
   - react-native-image-base64 (from `../node_modules/react-native-image-base64`)
   - react-native-image-picker (from `../node_modules/react-native-image-picker`)
@@ -1321,6 +1304,7 @@ DEPENDENCIES:
   - RNDeviceInfo (from `../node_modules/react-native-device-info`)
   - RNFS (from `../node_modules/react-native-fs`)
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
+  - "RNGoogleSignin (from `../node_modules/@react-native-google-signin/google-signin`)"
   - RNImageCropPicker (from `../node_modules/react-native-image-crop-picker`)
   - RNLocalize (from `../node_modules/react-native-localize`)
   - RNPDF (from `../node_modules/react-native-view-pdf`)
@@ -1338,23 +1322,18 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
+    - AppAuth
     - AppCenter
     - AppCenterReactNativeShared
+    - AppCheckCore
     - BEMCheckBox
     - fmt
-    - GoogleDataTransport
-    - GoogleMLKit
-    - GoogleToolboxForMac
+    - GoogleSignIn
     - GoogleUtilities
-    - GoogleUtilitiesComponents
+    - GTMAppAuth
     - GTMSessionFetcher
     - libevent
     - lottie-ios
-    - MLImage
-    - MLKitCommon
-    - MLKitFaceDetection
-    - MLKitVision
-    - nanopb
     - Plaid
     - PromisesObjC
     - SocketRocket
@@ -1428,6 +1407,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/logger"
   React-Mapbuffer:
     :path: "../node_modules/react-native/ReactCommon"
+  react-native-app-auth:
+    :path: "../node_modules/react-native-app-auth"
   react-native-biometrics:
     :path: "../node_modules/react-native-biometrics"
   react-native-camera:
@@ -1438,6 +1419,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-date-picker"
   react-native-document-picker:
     :path: "../node_modules/react-native-document-picker"
+  react-native-get-random-values:
+    :path: "../node_modules/react-native-get-random-values"
   react-native-html-to-pdf:
     :path: "../node_modules/react-native-html-to-pdf"
   react-native-image-base64:
@@ -1514,6 +1497,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-fs"
   RNGestureHandler:
     :path: "../node_modules/react-native-gesture-handler"
+  RNGoogleSignin:
+    :path: "../node_modules/@react-native-google-signin/google-signin"
   RNImageCropPicker:
     :path: "../node_modules/react-native-image-crop-picker"
   RNLocalize:
@@ -1542,11 +1527,13 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
-  AppCenter: 85c92db0759d2792a65eb61d6842d2e86611a49a
+  AppAuth: 1c1a8afa7e12f2ec3a294d9882dfa5ab7d3cb063
+  AppCenter: 395cc12b428b8fdf12e9f92294d93a55bac389e4
   appcenter-analytics: b3a60e025b8db7013a71053c1ced96bcf7acba75
   appcenter-core: 53cc7b5d9a2cdd6a484cae8e50977bab91e0780e
   appcenter-crashes: 9cb825ee8f89715a1b0a7164a71fc8c582b0e796
-  AppCenterReactNativeShared: 22aea9046e80c449137f4e574ae1f229616e2358
+  AppCenterReactNativeShared: 6de0a156fa7cdf7162f35ae2938fa3eeaed8965a
+  AppCheckCore: cc8fd0a3a230ddd401f326489c99990b013f0c4f
   BEMCheckBox: 5ba6e37ade3d3657b36caecc35c8b75c6c2b1a4e
   boost: d3f49c53809116a5d38da093a8aa78bf551aed09
   BVLinearGradient: 880f91a7854faff2df62518f0281afb1c60d49a3
@@ -1555,21 +1542,14 @@ SPEC CHECKSUMS:
   FBReactNativeSpec: 9f2b8b243131565335437dba74923a8d3015e780
   fmt: ff9d55029c625d3757ed641535fd4a75fedc7ce9
   glog: c5d68082e772fa1c511173d6b30a9de2c05a69a2
-  GoogleDataTransport: 6c09b596d841063d76d4288cc2d2f42cc36e1e2a
-  GoogleMLKit: 97ac7af399057e99182ee8edfa8249e3226a4065
-  GoogleToolboxForMac: d1a2cbf009c453f4d6ded37c105e2f67a32206d8
-  GoogleUtilities: ea963c370a38a8069cc5f7ba4ca849a60b6d7d15
-  GoogleUtilitiesComponents: 679b2c881db3b615a2777504623df6122dd20afe
+  GoogleSignIn: c7f09cfbc85a1abf69187be091997c317cc33b77
+  GoogleUtilities: 00c88b9a86066ef77f0da2fab05f65d7768ed8e1
+  GTMAppAuth: 217a876b249c3c585a54fd6f73e6b58c4f5c4238
   GTMSessionFetcher: 5aea5ba6bd522a239e236100971f10cb71b96ab6
   hermes-engine: 9cecf9953a681df7556b8cc9c74905de8f3293c0
   libevent: 4049cae6c81cdb3654a443be001fb9bdceff7913
   lottie-ios: 8f97d3271e155c2d688875c29cd3c74908aef5f8
   lottie-react-native: 8f9d4be452e23f6e5ca0fdc11669dc99ab52be81
-  MLImage: 1824212150da33ef225fbd3dc49f184cf611046c
-  MLKitCommon: afec63980417d29ffbb4790529a1b0a2291699e1
-  MLKitFaceDetection: 7c0e8bf09ddd27105da32d088fca978a99fc30cc
-  MLKitVision: e858c5f125ecc288e4a31127928301eaba9ae0c1
-  nanopb: 438bc412db1928dac798aa6fd75726007be04262
   Plaid: 8acc8ae324a0473b0d806afd238bb0bb16395811
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   RCT-Folly: 7169b2b1c44399c76a47b5deaaba715eeeb476c0
@@ -1593,11 +1573,13 @@ SPEC CHECKSUMS:
   React-jsinspector: 85583ef014ce53d731a98c66a0e24496f7a83066
   React-logger: 3eb80a977f0d9669468ef641a5e1fabbc50a09ec
   React-Mapbuffer: 84ea43c6c6232049135b1550b8c60b2faac19fab
+  react-native-app-auth: 149f01d2c824758453c9e7815217ded451974683
   react-native-biometrics: 352e5a794bfffc46a0c86725ea7dc62deb085bdc
   react-native-camera: 3eae183c1d111103963f3dd913b65d01aef8110f
   react-native-cameraroll: cb0d0a2b76a9d56461ea0ab5782f69e694544840
   react-native-date-picker: 312c387d2ff873c66c5e4cf78ff6827fa91644e2
   react-native-document-picker: 23b6a82e09199f4f109376e73d88892a8931eeea
+  react-native-get-random-values: 21325b2244dfa6b58878f51f9aa42821e7ba3d06
   react-native-html-to-pdf: 4c5c6e26819fe202971061594058877aa9b25265
   react-native-image-base64: 2ff9ac788639c87a91361ab6652cc95e871b1e54
   react-native-image-picker: 60f4246eb5bb7187fc15638a8c1f13abd3820695
@@ -1636,6 +1618,7 @@ SPEC CHECKSUMS:
   RNDeviceInfo: 42aadf1282ffa0a88dc38a504a7be145eb010dfa
   RNFS: 4ac0f0ea233904cb798630b3c077808c06931688
   RNGestureHandler: bc2cdb2dc42facdf34992ae364b8a728e19a3686
+  RNGoogleSignin: 148238e1591197de5a07d7621f23e52136820a73
   RNImageCropPicker: 771e2ca319d2cf92e04ebf334ece892ee9a6728f
   RNLocalize: d4b8af4e442d4bcca54e68fc687a2129b4d71a81
   RNPDF: 8526c7210ff375c29d2461c51945e2f5480f7b60
@@ -1654,6 +1637,6 @@ SPEC CHECKSUMS:
   Yoga: d17d2cc8105eed528474683b42e2ea310e1daf61
   ZXingObjC: 8898711ab495761b2dbbdec76d90164a6d7e14c5
 
-PODFILE CHECKSUM: f9e1d380886e09c82aecce58d51cbd56b8b147a8
+PODFILE CHECKSUM: 1926c86c22225438e94876f27c3547aa2751088b
 
 COCOAPODS: 1.15.2

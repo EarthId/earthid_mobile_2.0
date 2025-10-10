@@ -45,6 +45,9 @@ import LinearGradients from "../../components/GradientsPanel/LinearGradient";
 import CustomPopup from "../../components/Loader/customPopup";
 import { Platform } from 'react-native';
 
+import { getDidDetails } from '../../utils/newSSIAPIs';
+import {  signPkceSecp256k1_raw } from '../../utils/signature';
+
 const data = [
   { label: " 1", value: "1" },
   { label: " 2", value: "2" },
@@ -153,6 +156,7 @@ const CameraScreen = (props: any) => {
   console.log("issuerDid", keys?.responseData?.issuerDid);
   console.log("UserDid", keys?.responseData?.newUserDid);
   console.log("privatekey", keys?.responseData?.generateKeyPair?.privateKey);
+  console.log("publicKey", keys?.responseData?.generateKeyPair?.publicKey);
   console.log("createSignatureKey", createSignatureKey);
   var barcodeScanned = true;
   let url: any = `https://ssi-test.myearth.id/api/user/sign?issuerDID=${issurDid}`;
@@ -273,165 +277,13 @@ console.log('Consent Api response------:', consentApiCall)
     console.log("parseData", parseData);
     setverifyVcCred(parseData);
   };
-  const getZKBAge =async(success: any)=>{
-  
-    let   payload ={
-        dateOfBirth: success,
-        verifyParams: [
-          "dateOfBirth=1998-01-09"
-        ],
-        credentials: {
-          "@context": [
-            "https://www.w3.org/2018/credentials/v1"
-          ],
-          id: "UserAgeSchema:1:3027e0c0-b917-4a71-9c7f-409965c41d4a",
-          type: [
-            "VerifiableCredential",
-            "UserAgeSchema:1",
-            "Encrypted"
-          ],
-          version: "UserAgeSchema:1",
-          credentialSchema: {
-            id: "http://ssi-test.myearth.id/schema/UserAgeSchema",
-            type: "JsonSchemaValidator2018"
-          },
-          issuer: "did:earthid:testnet:H8xsGiJMKq9D3KewDwCMnTo8Xs7PexCivnZyC9EgUkdV;earthid:testnet:fid=0.0.2239011",
-          credentialSubject: [
-            {
-              id: "MzMsMTU1LDg1LDU5LDEzMywzNSwxNzMsNTgsMTA1LDg0LDQ4LDIxNSwxOTAsNDMsMjMsMjA1LDIwMSwxOCwxMzcsMTgxLDEwNCwxNjUsMTgxLDg4LDM4LDIyNywxNTEsMjEwLDE1OSw5NywzNCw2Nw==",
-              earthId: "MjA4LDIwNCw5MSwxNzAsNzMsMTQ5LDI0OCwyMjIsNzQsMjAxLDE4MSw5MiwxNCw4LDg5LDI0LDEyOCw0MCwxNjcsMjMsMTU0LDE2NCwxMiwyMDUsMTc0LDcyLDIyOSwzOSwxMTEsNDUsMTExLDIyNQ==",
-              dateOfBirth: "MTcxLDIzNiwxNjgsMTcwLDE4MiwxOTQsMTc3LDEyMywzMywxMiwxNTQsNTgsMTM2LDIzMSwxMzcsMTIsMjQxLDkxLDIwMCw2NywyMjksMjMxLDE2LDE3NSwxNDIsMjgsMTU5LDIwMywyNTIsMjMyLDEyNyw1NA=="
-            }
-          ],
-          issuanceDate: "2023-11-21T06:43:26.344Z",
-          expirationDate: "2024-11-21T06:43:24.588Z",
-          proof: {
-            type: "Ed25519Signature2018",
-            creator: "did:earthid:testnet:H8xsGiJMKq9D3KewDwCMnTo8Xs7PexCivnZyC9EgUkdV;earthid:testnet:fid=0.0.2239011",
-            created: "2023-11-21T06:43:26.344Z",
-            proofPurpose: "assertionMethod",
-            vcVerificationMethod: "did:earthid:testnet:H8xsGiJMKq9D3KewDwCMnTo8Xs7PexCivnZyC9EgUkdV;earthid:testnet:fid=0.0.2239011#did-root-key",
-            jws: "eyJjcml0IjpbImI2NCJdLCJiNjQiOmZhbHNlLCJhbGciOiJFZERTQSJ9..NDllYzQxZTUwZDEwZDA1NDdmNDc2MTg4YmU2YjAzZmMxZTE5MTZmZTNmMTA5NDEzZGU1YmU4NDI2MDExZTIxN2UzMWI4ODJhYjQ0NzBhNzYwMDIyNjhlZjU0YjQ0OWMwN2RkMzQ2OTkxYjcwYThhM2VkYmJkZDY1YWNmZTRkMDE="
-          },
-          biometrics: {
-            face: null,
-            iris: null,
-            finger: null
-          },
-          credentialStatus: ""
-        }
-      }
-    
-      try {
-        console.log('payload=====>',JSON.stringify(payload))
-        
-        // Replace 'YOUR_API_ENDPOINT' with the actual API endpoint
-        const response = await fetch('https://ssi-test.myearth.id/api/issuer/createZkp', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-API-KEY':'01a41742-aa8e-4dd6-8c71-d577ac7d463c'
-            // You may need to include additional headers here, such as authentication headers
-          },
-          body: JSON.stringify(payload),
-        });
-    
-        const result = await response.json();
-        console.log('setZkpSignature',result)
-        if(result){
-          if(success?.request === 'balance'){
-           
-            if(result?.data){
-              if(result?.data?.certificate?.balance){
-                setTimeout(()=>{    
-                  setisLoading(false)            
-                  showPopup(
-                    "Success",
-                    "Proof of funds is verified successfully",
-                    [{ text: "OK", onPress: () => setPopupVisible(false) }]
-                  );
-                },5000)
-              }
-              else{
-                setTimeout(()=>{    
-                  setisLoading(false)            
-                  showPopup(
-                    "Verification Failed",
-                    "Proof of funds verification failed",
-                    [{ text: "OK", onPress: () => setPopupVisible(false) }]
-                  );
-                },5000)
-               
-              }
-            }
-          }
-          if(success?.request === 'minAge'){
-           
-            if(result?.data){
-              if(result?.data?.certificate?.dateOfBirth){
-                setTimeout(()=>{    
-                  setisLoading(false)            
-                  showPopup(
-                    "Success",
-                    "Proof of age is verified successfully",
-                    [{ text: "OK", onPress: () => setPopupVisible(false) }]
-                  );
-                },5000)
-              }
-              else{
-                setTimeout(()=>{    
-                  setisLoading(false)            
-                  showPopup(
-                    "Verification Failed",
-                    "Proof of age verification failed",
-                    [{ text: "OK", onPress: () => setPopupVisible(false) }]
-                  );
-                },5000)
-               
-              }
-            }
-          }
-        }
-        setZkpSignature(result)
-      
-       const  data = {
-          sessionKey: barCodeDataDetails?.sessionKey,
-          encrypted_object:{
-            earthId: userDetails?.responseData?.earthId,
-            pressed: false,
-            userName: userDetails?.responseData?.username,
-            userEmail: userDetails?.responseData?.email,
-            userMobileNo: userDetails?.responseData?.phone,
-            OrganizationID: userDetails?.responseData?.orgId,...result?.data},
-            zkbType:success?.request
-        };
-
-      console.log('earthid req==>',JSON.stringify(data))
-        sendDatatoServiceProvider(QrcodeApis, data, "POST");
-        // Check if the request was successful
-        if (!response.ok) {
-          setisLoading(false)
-          throw new Error('Network response was not ok');
-        }
-        console.log('setZkpSignature',result)
-       
-        
-        // Set the data in the state
-        //setData(result);
-      } catch (error) {
-        setisLoading(false)
-        console.error('Error fetching data:', error);
-      }
-    
-  
-    fetchData();
-  }
 
 
   const generateAgeVC = async (success: { request: string; value: string; } | undefined) => {
     //const amount =  documentsDetailsList?.responseData?.filter((item: { amount: any; })=>item?.amount)[0]?.amount
     const dateOfBirth : any = await AsyncStorage.getItem("userDOB");
-    const ageProof = await AsyncStorage.getItem("ageProofVC");
+    const ageProofvc = await AsyncStorage.getItem("ageProofVC");
+    const ageProof = JSON.parse(ageProofvc)
     console.log('Userdetails for dob:.............', dateOfBirth)
     console.log('AgeProofVC for dob:.............', ageProof)
     // console.log('datapayload===>12345',JSON.stringify({
@@ -470,7 +322,7 @@ console.log('Consent Api response------:', consentApiCall)
 
       // Get the response text directly
      // const resulst = await response.json();
-const ageProofJSON = JSON.parse(ageProof)
+const ageProofJSON = ageProof
      // console.log('response?.data?.verifiableCredential',resulst?.data?.verifiableCredential)
       let payload 
    
@@ -485,9 +337,24 @@ const ageProofJSON = JSON.parse(ageProof)
         `dateOfBirth=${(dateOfBirth)}`
       ],
       //credentials:resulst?.data?.verifiableCredential
-      credentials: ageProofJSON
+      credentials: ageProofJSON.verifiableCredential
     }
-     }else{
+     } else if (success?.request === 'ageRange') {
+      payload = {
+        dateOfBirth: {
+          type: "date",
+            minimum: parseInt(success?.minValue),
+            maximum: parseInt(success?.maxValue),
+          unit: "years"
+        },
+        verifyParams: [
+          `dateOfBirth=${(dateOfBirth)}`
+        ],
+        credentials: ageProofJSON.verifiableCredential
+      };
+    }
+    
+     else{
        payload ={
         dateOfBirth: success,
         verifyParams: [
@@ -550,7 +417,7 @@ const ageProofJSON = JSON.parse(ageProof)
         });
     
         const result = await response.json();
-        console.log('setZkpSignature',result)
+        console.log('zkpResult-------->',result)
         if(result){
           if(success?.request === 'balance'){
             documentsDetailsList?.responseData?.filter((item: { amount: any; })=>item?.amount)[0]?.amount
@@ -559,10 +426,10 @@ const ageProofJSON = JSON.parse(ageProof)
               if(result?.data?.certificate?.balance){
                 setTimeout(()=>{    
                   setisLoading(false)            
-                 // Alert.alert('Proof of funds is verified successfully')
+                 // Alert.alert('Proof of Funds is verified successfully')
                   showPopup(
                     "Success",
-                    "Proof of funds is verified successfully",
+                    "Proof of Funds is verified successfully",
                     [{ text: "OK", onPress: () => setPopupVisible(false) }]
                   );
                 },5000)
@@ -570,10 +437,10 @@ const ageProofJSON = JSON.parse(ageProof)
               else{
                 setTimeout(()=>{    
                   setisLoading(false)            
-                //  Alert.alert('Proof of funds verification failed')
+                //  Alert.alert('Proof of Funds verification failed')
                   showPopup(
                     "Verification Failed",
-                    "Proof of funds verification failed",
+                    "Proof of Funds verification failed",
                     [{ text: "OK", onPress: () => setPopupVisible(false) }]
                   );
                 },5000)
@@ -582,6 +449,33 @@ const ageProofJSON = JSON.parse(ageProof)
             }
           }
           if(success?.request === 'minAge'){
+            if(result?.data){
+              if(result?.data?.certificate?.dateOfBirth){
+                setTimeout(()=>{    
+                  setisLoading(false)            
+                 // Alert.alert('Proof of age is verified successfully')
+                  showPopup(
+                    "Success",
+                    "Proof of age is verified successfully",
+                    [{ text: "OK", onPress: () => setPopupVisible(false) }]
+                  );
+                },5000)
+              }
+              else{
+                setTimeout(()=>{    
+                  setisLoading(false)            
+                //  Alert.alert('Proof of age verification failed')
+                  showPopup(
+                    "Verification Failed",
+                    "Proof of age verification failed",
+                    [{ text: "OK", onPress: () => setPopupVisible(false) }]
+                  );
+                },5000)
+               
+              }
+            }
+          }
+          if(success?.request === 'ageRange'){
             if(result?.data){
               if(result?.data?.certificate?.dateOfBirth){
                 setTimeout(()=>{    
@@ -619,7 +513,10 @@ const ageProofJSON = JSON.parse(ageProof)
             userName: userDetails?.responseData?.username,
             userEmail: userDetails?.responseData?.email,
             userMobileNo: userDetails?.responseData?.phone,
-            OrganizationID: userDetails?.responseData?.orgId,...result?.data},
+            OrganizationID: userDetails?.responseData?.orgId,
+            zkpVc: ageProof,
+            zkpResult: result?.data
+          },
             zkbType:success?.request
         };
 
@@ -776,16 +673,17 @@ const ageProofJSON = JSON.parse(ageProof)
         console.log('request is',success?.request)
         if(result){
           if(success?.request === 'balance'){
+            console.log('Balance1-----------')
             documentsDetailsList?.responseData?.filter((item: { amount: any; })=>item?.amount)[0]?.amount
             
             if(result?.data){
               if(result?.data?.certificate?.balance){
                 setTimeout(()=>{    
                   setisLoading(false)            
-                 // Alert.alert('Proof of funds is verified successfully')
+                 // Alert.alert('Proof of Funds is verified successfully')
                   showPopup(
                     "Success",
-                    "Proof of funds is verified successfully",
+                    "Proof of Funds is verified successfully",
                     [{ text: "OK", onPress: () => setPopupVisible(false) }]
                   );
                 },5000)
@@ -793,10 +691,10 @@ const ageProofJSON = JSON.parse(ageProof)
               else{
                 setTimeout(()=>{    
                   setisLoading(false)            
-                 // Alert.alert('Proof of funds verification failed')
+                 // Alert.alert('Proof of Funds verification failed')
                   showPopup(
                     "Verification Failed",
-                    "Proof of funds verification failed",
+                    "Proof of Funds verification failed",
                     [{ text: "OK", onPress: () => setPopupVisible(false) }]
                   );
                 },5000)
@@ -877,6 +775,35 @@ const ageProofJSON = JSON.parse(ageProof)
       
   };
 
+// make the function accept the inner requestType object AND the sessionKey directly
+// async function handlePkceLogin(parsedRequestType: any, barCodeDataDetails: any, didDetails: any) {
+//   const { sessionId, codeChallenge } = parsedRequestType; // requestType is already parsed into an object
+//   if (!didDetails?.privateKey || !didDetails?.did) {
+//     throw new Error('Missing DID/privateKey');
+//   }
+
+//   // Sign with the SAME keys you showed in the log
+//   const { signatureBase64, publicKeyHex } =
+//     await signChallengeSecp256k1(codeChallenge, didDetails.privateKey);
+
+//   // Send to your relay/backend so the portal can complete login
+//   const relayPayload = {
+//     sessionKey: barCodeDataDetails?.sessionKey,
+//     encrypted_object: {
+//       did: didDetails.did,
+//       sessionId,
+//       codeChallenge,                 // echo back what you signed
+//       signature: signatureBase64,    // base64 64-byte sig (r||s)
+//       alg: 'secp256k1-sha256',       // or whatever your server expects
+//       publicKey: publicKeyHex,       // compressed hex by default
+//     },
+//   };
+
+//   await sendDatatoServiceProvider(QrcodeApis, relayPayload, 'POST');
+// }
+
+
+
   const generateUserSignature = async () => {
     const data = {
       payload: {
@@ -913,16 +840,28 @@ const ageProofJSON = JSON.parse(ageProof)
     }
   }
   const getDropDownList = () => {
-    let datas = [];
-    datas = documentsDetailsList?.responseData;
-    if (barCodeDataDetails?.requestType === "shareCredentials") {
-      datas = datas?.filter((item: { isVc: any }) => item.isVc);
-      return datas;
+    let filteredDocuments = [];
+  
+    if (barCodeDataDetails?.requestType?.request === "idvProof") {
+      // For IDV, only include documents where documentName is "Proof of IDV"
+      filteredDocuments = documentsDetailsList?.responseData?.filter(
+        (item) => item?.documentName === "Proof of IDV"
+      );
+    } else if (barCodeDataDetails?.requestType === "shareCredentials") {
+      // For shareCredentials, include only verifiable credentials
+      filteredDocuments = documentsDetailsList?.responseData?.filter(
+        (item) => item.isVc
+      );
+    } else {
+      // For other cases, return all documents
+      filteredDocuments = documentsDetailsList?.responseData || [];
     }
-    return datas;
+  
+    return filteredDocuments;
   };
+  
 
-  const _handleBarCodeRead = (barCodeData: any) => {
+  const _handleBarCodeRead = async(barCodeData: any) => {
     console.log("barcodedatappppp", barCodeData?.data);  
     setisLoading(true)
       if (barCodeData?.data === undefined) {
@@ -975,16 +914,30 @@ const ageProofJSON = JSON.parse(ageProof)
             }
             if (serviceData.requestType === "document") {
               serviceProviderApiCall(serviceData);
+
+            }if (parsedRequestType?.requestType?.request === "idvProof") {
+              console.log('idvbarcode scan------------------------', parsedRequestType.requestType)
+              serviceProviderApiCallForapi(parsedRequestType);
             }
             if (serviceData.requestType === "selectiveData") {
               serviceProviderApiCall(serviceData);
             }
             if (parsedRequestType?.requestType?.request === "balance") {
+              console.log('balance scan------------------------', parsedRequestType.requestType)
               serviceProviderApiCallForapi(parsedRequestType);
             }
             if (parsedRequestType?.requestType?.request === "minAge") {
               serviceProviderApiCallForapi(parsedRequestType);
             }
+            if (parsedRequestType?.requestType?.request === "ageRange") {
+              serviceProviderApiCallForapi(parsedRequestType);
+            }
+            if (parsedRequestType?.requestType?.request === 'login') {
+  serviceProviderApiCallForapi(parsedRequestType);
+ // const didDetails = await getDidDetails();        // returns the SAME keys you logged
+//  await handlePkceLogin(parsedRequestType.requestType, barCodeDataDetails, didDetails);
+
+}
            
             if(!serviceData.requestType){
               setisLoading(false)
@@ -1140,6 +1093,8 @@ const ageProofJSON = JSON.parse(ageProof)
         setisDocumentModalkyc(true);
       } else if (barCodeDataDetails?.requestType === "document") {
         setisDocumentModalkyc(true);
+      }else if (barCodeDataDetails?.requestType?.request === "idvProof") {
+        setisDocumentModalkyc(true);
       } else if (barCodeDataDetails?.requestType === "selectiveData") {
         setisDocumentModalkyc(true);
       } else if (barCodeDataDetails?.requestType === "generateCredentials") {
@@ -1148,9 +1103,18 @@ const ageProofJSON = JSON.parse(ageProof)
       else if (barCodeDataDetails?.requestType?.request === "minAge") {
         setisDocumentModalkyc(true);
       }
+      else if (barCodeDataDetails?.requestType?.request === "ageRange") {
+        setisDocumentModalkyc(true);
+      }
       else if (barCodeDataDetails?.requestType?.request === "balance") {
         setisDocumentModalkyc(true);
       }
+      else if (barCodeDataDetails?.requestType?.request === "login") {
+         setTimeout(() => {
+          setissuerLogin(true);
+        }, 100);
+      }
+
     }
   }, [serviceProviderResponse]);
 
@@ -1170,6 +1134,18 @@ const ageProofJSON = JSON.parse(ageProof)
         setisLoading(false)
         setIsCamerVisible(true);
         generateUserSignature();
+       // Alert.alert("Login is successful");
+       showPopup(
+        "Success",
+        "Login is successful",
+        [{ text: "OK", onPress: () => setPopupVisible(false) }]
+      );
+      }
+      if (barCodeDataDetails?.requestType?.request === "login") {
+        setisDocumentModalkyc(false);
+        setisLoading(false)
+        setIsCamerVisible(true);
+        
        // Alert.alert("Login is successful");
        showPopup(
         "Success",
@@ -1208,10 +1184,10 @@ const ageProofJSON = JSON.parse(ageProof)
         setisDocumentModalkyc(false);
         setIsCamerVisible(true);
         setisLoading(false)
-       // Alert.alert("Proof of funds has been shared successfully");
+       // Alert.alert("Proof of Funds has been shared successfully");
         showPopup(
           "Success",
-          "Proof of funds has been shared successfully",
+          "Proof of Funds has been shared successfully",
           [{ text: "OK", onPress: () => setPopupVisible(false) }]
         );
       }
@@ -1226,7 +1202,21 @@ const ageProofJSON = JSON.parse(ageProof)
           [{ text: "OK", onPress: () => setPopupVisible(false) }]
         );
       }
+      if (barCodeDataDetails?.requestType?.request === "ageRange") {
+        setisDocumentModalkyc(false);
+        setIsCamerVisible(true);
+        setisLoading(false)
+       // Alert.alert("Proof of age has been shared successfully");
+        showPopup(
+          "Success",
+          "Proof of age has been shared successfully",
+          [{ text: "OK", onPress: () => setPopupVisible(false) }]
+        );
+      }
       if (barCodeDataDetails?.requestType === "document") {
+        setIsCamerVisible(true);
+      }
+      if (barCodeDataDetails?.requestType?.request === "idvProof") {
         setIsCamerVisible(true);
       }
     }
@@ -1290,6 +1280,26 @@ const ageProofJSON = JSON.parse(ageProof)
     })
  return datas
   }
+
+  const getIdvVc =()=>{
+    let datas: any[] =[]
+    documentsDetailsList?.responseData.map((item: { selectedForCheckBox: any; base64: any; isVc: any; verifiableCredential: any; },_index: any)=>{
+     // console.log('itemselected',item.selectedForCheckBox)
+      if(item.isVc && item.verifiableCredential.version=="IDVProofSchema:1" && item.selectedForCheckBox){
+        datas.push(item.verifiableCredential)
+      }
+    })
+ return datas
+  }
+
+  // const getIdvVc = () => {
+  //   // Filter the selected items and ensure only VC items are included
+  //   const selectedVCs = selectedCheckBox
+  //     ?.filter(item => item.isVc && item.selectedForCheckBox)
+  //     ?.map(item => item.verifiableCredential);
+  
+  //   return selectedVCs || [];
+  // };
 
   const getArrayOfDocName =()=>{
     let datas: any[] =[]
@@ -1485,7 +1495,7 @@ const ageProofJSON = JSON.parse(ageProof)
     return trap;
   };
 
-  const getData = () => {
+  const getData = async () => {
     console.log("userDetails", userDetails);
     if (barCodeDataDetails) {
       let data;
@@ -1499,11 +1509,48 @@ const ageProofJSON = JSON.parse(ageProof)
             userName: userDetails?.responseData?.username,
             userEmail: userDetails?.responseData?.email,
             userMobileNo: userDetails?.responseData?.phone,
-            publicKey: keys?.responseData?.result?.publicKey,
+            publicKey: publicKey,
             userDid: keys?.responseData?.newUserDid,
           },
         };
-      } else if (barCodeDataDetails?.requestType === "generateCredentials") {
+      }else if (barCodeDataDetails?.requestType?.request === "login") {
+        console.log("type===>", "login", barCodeDataDetails);
+const sessionKey = barCodeDataDetails?.sessionKey;
+  const { sessionId, codeChallenge } = barCodeDataDetails?.requestType || {};
+
+  const didDetails = await getDidDetails();
+  console.log('these are the did details:', didDetails);
+
+  if (!didDetails?.did || !didDetails?.privateKey) {
+    throw new Error('Missing DID or privateKey');
+  }
+
+  const did = didDetails.did;
+  const privHex = didDetails.privateKey;
+  const pubUncompressedHex = didDetails.publicKey;
+
+  const signature = await signPkceSecp256k1_raw(codeChallenge, privHex);
+
+  data = {
+    sessionKey,
+    encrypted_object: {
+      earthId: userDetails?.responseData?.earthId,
+      did,
+      sessionId,
+      challenge: codeChallenge,
+      signature,                    // base64url(r||s)
+      algorithm: 'secp256k1',
+      publicKey: pubUncompressedHex,// uncompressed hex (starts with 04)
+      publicKeyEncoding: 'hex-uncompressed',
+      signatureEncoding: 'base64url-compact'
+    },
+  };
+
+//await sendDatatoServiceProvider(QrcodeApis, data, 'POST');
+
+
+      }
+       else if (barCodeDataDetails?.requestType === "generateCredentials") {
         console.log("type===>", "generateCredentials");
         data = {
           sessionKey: barCodeDataDetails?.sessionKey,
@@ -1540,6 +1587,28 @@ const ageProofJSON = JSON.parse(ageProof)
             base64: getArrayOfBase64(),
             type:getTypesOfDoc()
             
+          },
+        };
+        console.log('vicky+++data123',data)
+      }else if (barCodeDataDetails?.requestType?.request === "idvProof") {
+        console.log("type===>", "idv");
+        
+        data = {
+          sessionKey: barCodeDataDetails?.sessionKey,
+          encrypted_object: {
+            earthId: userDetails?.responseData?.earthId,
+            pressed: false,
+            userName: userDetails?.responseData?.username,
+            userEmail: userDetails?.responseData?.email,
+            userMobileNo: userDetails?.responseData?.phone,
+            OrganizationID: userDetails?.responseData?.orgId,
+            requestType: barCodeDataDetails?.requestType,
+            reqNo: barCodeDataDetails?.reqNo,
+            kycToken:
+              "6hrFDATxrG9w14QY9wwnmVhLE0Wg6LIvwOwUaxz761m1JfRp4rs8Mzozk5xhSkw0_MQz6bpcJnrFUDwp5lPPFC157dHxbkKlDiQ9XY3ZIP8zAGCsS8ruN2uKjIaIargX",
+            publicKey: keys?.responseData?.result?.publicKey,
+            userDid: keys?.responseData?.newUserDid,
+            idvVc: getIdvVc()
           },
         };
         console.log('vicky+++data123',data)
@@ -1610,6 +1679,10 @@ const ageProofJSON = JSON.parse(ageProof)
         generateAgeVC(barCodeDataDetails?.requestType)
         return
       }
+      else if (barCodeDataDetails?.requestType.request === "ageRange") {
+        generateAgeVC(barCodeDataDetails?.requestType)
+        return
+      }
       else if (barCodeDataDetails?.requestType.request === "balance") {
         getZKPSignature(barCodeDataDetails?.requestType)
         return
@@ -1632,9 +1705,9 @@ const ageProofJSON = JSON.parse(ageProof)
 
   // Determine the required document based on the request type
 const requiredDocument = barCodeDataDetails?.requestType?.request === 'minAge' 
-? 'Proof of age' 
+? 'Proof of Age' 
 : barCodeDataDetails?.requestType?.request === 'balance' 
-  ? 'Proof of funds' 
+  ? 'Proof of Funds' 
   : null;
 
 // Initialize the variable for checking if the required document is not present
@@ -1828,7 +1901,7 @@ requiredDocumentNotPresent = documentsDetailsList?.responseData?.every(
         </View>
       </ModalView>
       {isDocumentModalkyc && 
-    (barCodeDataDetails?.requestType.request === "balance" || barCodeDataDetails?.requestType.request === "minAge") && 
+    (barCodeDataDetails?.requestType.request === "balance" || barCodeDataDetails?.requestType.request === "minAge" || barCodeDataDetails?.requestType.request === "ageRange") && 
     documentsDetailsList?.responseData?.length > 0 &&
     !requiredDocumentNotPresent ? 
      <ZkbScreen 
@@ -2129,7 +2202,246 @@ barCodeDataDetails?.requestType === "document" ?
           
         </View>}
       </ModalView>:
+barCodeDataDetails?.requestType.request === "idvProof" ?
+<ModalView
+ left={deviceWidth / 12}
+ width={deviceWidth / 1.2}
+ isModalVisible={isDocumentModalkyc}
+ height={520}
+>
+   {isLoading ? <View style={{flex:1,justifyContent:'center',alignItems:'center'}}>        
+   <ActivityIndicator color={'red'} size='large' />
+   </View>:
+ <View style={{ flex: 1, paddingHorizontal: 5 }}>
+   
+   {
+documentsDetailsList?.responseData?.length === 0 ||
+documentsDetailsList?.responseData === undefined ? (
+<TouchableOpacity onPress={() => navigateToCamerScreen()}>
+<View style={{ paddingHorizontal: 5, marginTop: 10 }}>
+ <GenericText
+   style={{
+     textAlign: "center",
+     color: "#000",
+     fontSize: 14,
+     fontWeight: "900",
+     marginTop: 20,
+   }}
+ >
+   {"+ Add Documents"}
+ </GenericText>
+</View>
+</TouchableOpacity>
+) : (
+<View style={{ paddingHorizontal: 5, marginTop: 10 }}>
+<GenericText
+ style={{
+   textAlign: "center",
+   color: "#000", // Different color for the alternate text
+   fontSize: 14,
+   fontWeight: "900",
+   padding: 5,
+   marginTop: 10,
+ }}
+>
 
+ {/* {isEarthId() ? "earthidwanttoaccess" : "globalidwanttoaccess"} */}
+ {barCodeDataDetails?.requestType?.company
+    ? `${barCodeDataDetails?.requestType?.company} wants to access your following information`
+    : "An entity wants to access your information"}
+</GenericText>
+</View>
+)
+}
+
+   {/* <GenericText
+     style={{
+       textAlign: "center",
+       padding: 5,
+       color: "#000",
+       fontSize: 14,
+       fontWeight: "900",
+       marginTop: 10,
+     }}
+   >
+     {isEarthId() ? "earthidwanttoaccess" : "globalidwanttoaccess"}
+   </GenericText> */}
+   <View style={{ height: 300 }}>
+     <ScrollView
+       style={{ flexGrow: 1 }}
+       contentContainerStyle={{ flexGrow: 1 }}
+     >
+       <View>
+         {getDropDownList() &&
+           getDropDownList().length > 0 &&
+           getDropDownList()?.map(
+             (
+               item: {
+                 docName:
+                   | boolean
+                   | React.ReactChild
+                   | React.ReactFragment
+                   | React.ReactPortal
+                   | null
+                   | undefined;
+                 id: any;
+                 name:
+                   | boolean
+                   | React.ReactChild
+                   | React.ReactFragment
+                   | React.ReactPortal
+                   | null
+                   | undefined;
+               },
+               index: any
+             ) => {
+               //console.log("item", item);
+               return (
+                 <View
+                   style={{ flexDirection: "row", marginVertical: 10, marginLeft: 15 }}
+                 >
+                   <CheckBox
+                     disabled={false}
+                     onValueChange={(_value) => {
+                       const selectedCheckBoxs = selectedCheckBox?.map(
+                         (
+                           itemLocal: {
+                             id: any;
+                             selectedForCheckBox: boolean;
+                           },
+                           _index: any
+                         ) => {
+                           if (itemLocal?.id === item?.id) {
+                             itemLocal.selectedForCheckBox =
+                               !itemLocal.selectedForCheckBox;
+                           }
+
+                           return itemLocal;
+                         }
+                       );
+                       setselectedCheckBox([...selectedCheckBoxs]);
+                     }}
+                     value={
+                       selectedCheckBox && selectedCheckBox.length > 0
+                         ? selectedCheckBox[index]?.selectedForCheckBox
+                         : false
+                     }
+                   />
+                   <View
+                     style={{
+                       justifyContent: "center",
+                       alignItems: "center",
+                       width:230,
+                       flexWrap:'wrap'
+                     }}
+                   >
+                     <GenericText
+                       style={{
+                         textAlign: "center",
+                         padding: 5,
+                         color: "#000",
+                         fontSize: 14,
+                         fontWeight: "300",
+
+                       }}
+                     >
+                       {item?.isVc?item.documentName: item?.docName }
+                     </GenericText>
+                   </View>
+                 </View>
+               );
+             }
+           )}
+       </View>
+     </ScrollView>
+
+   </View>
+
+   <View style={{ flexDirection: 'row', alignItems: 'center', marginTop:10, marginLeft: 20, marginRight: 15  }}>
+ <CheckBox
+   value={isChecked}
+
+   onValueChange={(newValue) => setIsChecked(newValue)}
+ />
+ <GenericText style={{marginLeft: 5,marginRight: 15, fontSize: 11, paddingRight: 20}}>
+ {isEarthId() ? "earthidconsent" : "globalidconsent"}
+</GenericText>
+</View>
+  
+ <View
+style={{
+flexDirection: "row",
+justifyContent: "space-between",
+marginBottom: 20,
+marginHorizontal: 30,
+}}
+>
+{/* Cancel Button */}
+<Button
+onPress={() => {
+setisDocumentModalkyc(false);
+setIsCamerVisible(true);
+}}
+style={{
+buttonContainer: {
+ elevation: 5,
+ marginHorizontal: 10,
+ backgroundColor: "#fff",  // White background for Cancel button
+ borderWidth: 1,  // Border for the Cancel button
+ borderColor: '#D3D3D3',  // Light gray border color
+ borderRadius: Platform.OS === 'ios' ? 30 : 30,  // Consistent borderRadius
+ paddingVertical: 13,
+ paddingHorizontal: 15,
+ paddingRight: 25,
+ alignItems: 'center',  // Horizontally center the content
+ justifyContent: 'center',  // Vertically center the conten
+},
+text: {
+ color: '#525252',  // Text color for Cancel button
+ fontSize: 13,
+ fontWeight: "700",  // Bold text
+ textAlign: 'center', 
+},
+iconStyle: {
+ tintColor: '#525252',
+},
+}}
+title={"Cancel"}
+/>
+
+{/* Authorize Button */}
+<Button
+onPress={createVerifiableCredentials}
+disabled={checkDisable() || !isChecked}
+style={{
+buttonContainer: {
+ elevation: 5,
+ marginHorizontal: 10,
+ backgroundColor: Screens.colors.primary,  // Primary color for Authorize button
+ opacity: checkDisable() || !isChecked ? 0.5 : 1,  // Disabled state opacity
+ borderRadius: Platform.OS === 'ios' ? 30 : 30,  // Consistent borderRadius
+ paddingVertical: 13,
+ paddingHorizontal: 15,
+ paddingRight: 25,
+ alignItems: 'center',  // Horizontally center the content
+ justifyContent: 'center',  // Vertically center the conten
+},
+text: {
+ color: Screens.pureWhite,  // White text for Authorize button
+ fontSize: 13,
+ fontWeight: "700",  // Bold text
+ textAlign: 'center', 
+},
+iconStyle: {
+ tintColor: Screens.pureWhite,
+},
+}}
+title={"Authorize"}
+/>
+</View>
+   
+ </View>}
+</ModalView>:
 <ModalView
 left={deviceWidth / 12}
 width={deviceWidth / 1.2}

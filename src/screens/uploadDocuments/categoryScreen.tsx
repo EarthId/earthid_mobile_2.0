@@ -248,10 +248,10 @@ const categoryScreen = ({ navigation, route }: IDocumentScreenProps) => {
           var date = dateTime();
           const filePath = RNFetchBlob.fs.dirs.DocumentDir + "/" + "Adhaar";
 
-           const s3Doc =  await uploadToS3(fileUri, categoryList[selectedParentIndex].key, docname, ".pdf");
+         //  const s3Doc =  await uploadToS3(fileUri, categoryList[selectedParentIndex].key, docname, ".pdf");
       
-          if(s3Doc.status==200){
-            console.log('Document uploaded to s3 successfully!!!', s3Doc)
+         // if(s3Doc.status==200){
+            //console.log('Document uploaded to s3 successfully!!!', s3Doc)
 
             const document: any[0] = categoryList[
               selectedParentIndex
@@ -264,7 +264,7 @@ const categoryScreen = ({ navigation, route }: IDocumentScreenProps) => {
               documentName: `${categoryList[selectedParentIndex].key} (${document[0]?.title})`,
               //  name: `${categoryList[selectedParentIndex].key} (${document[0]?.title})`,
               path: filePath,
-              s3Path: s3Doc.fullPath,
+             // s3Path: s3Doc.fullPath,
               date: date?.date,
               time: date?.time,
               txId: "e4343434343434443",
@@ -289,18 +289,18 @@ const categoryScreen = ({ navigation, route }: IDocumentScreenProps) => {
               setsuccessResponse(false);
               navigation.navigate("Documents");
             }, 2000);
-         }else{
-          showPopup(
-            "Error",
-            "An error occurred while uploading the document. Please try again",
-            [
-              {
-                text: "OK",
-                onPress: () => setPopupVisible(false),
-              },
-            ]
-          );
-         }
+        //  }else{
+        //   showPopup(
+        //     "Error",
+        //     "An error occurred while uploading the document. Please try again",
+        //     [
+        //       {
+        //         text: "OK",
+        //         onPress: () => setPopupVisible(false),
+        //       },
+        //     ]
+        //   );
+        //  }
          
           //  const s3uploadRes=  await uploadToS3(fileUri, categoryList[selectedParentIndex].key, docname, ".pdf");
           //  if(s3uploadRes.httpStatusCode=="200"){
@@ -323,16 +323,16 @@ const categoryScreen = ({ navigation, route }: IDocumentScreenProps) => {
 
             const filePath = RNFetchBlob.fs.dirs.DocumentDir + "/" + "Adhaar";
 
-            const s3Doc =  await uploadToS3(fileUri, categoryList[selectedParentIndex].key, docname, ".jpg");
+           // const s3Doc =  await uploadToS3(fileUri, categoryList[selectedParentIndex].key, docname, ".jpg");
               
-               if(s3Doc.status==200){
-                console.log('Document uploaded to s3 successfully!!!', s3Doc)
+             //  if(s3Doc.status==200){
+               // console.log('Document uploaded to s3 successfully!!!', s3Doc)
                 var documentDetails: IDocumentProps = {
                   id: `ID_VERIFICATION${Math.random()}${selectedDocument}${Math.random()}`,
                   documentName: `${categoryList[selectedParentIndex].key} (${document[0]?.title})`,
                   //  name: `${categoryList[selectedParentIndex].key} (${document[0]?.title})`,
                   path: filePath,
-                  s3Path: s3Doc.fullPath,
+                  //s3Path: s3Doc.fullPath,
                   date: date?.date,
                   time: date?.time,
                   txId: "e4343434343434443",
@@ -357,18 +357,18 @@ const categoryScreen = ({ navigation, route }: IDocumentScreenProps) => {
                   setsuccessResponse(false);
                   navigation.navigate("Documents");
                 }, 2000);
-             }else{
-              showPopup(
-                "Error",
-                "An error occurred while uploading the document. Please try again",
-                [
-                  {
-                    text: "OK",
-                    onPress: () => setPopupVisible(false),
-                  },
-                ]
-              );
-             }
+            //  }else{
+            //   showPopup(
+            //     "Error",
+            //     "An error occurred while uploading the document. Please try again",
+            //     [
+            //       {
+            //         text: "OK",
+            //         onPress: () => setPopupVisible(false),
+            //       },
+            //     ]
+            //   );
+            //  }
 
            
          
@@ -395,16 +395,16 @@ const categoryScreen = ({ navigation, route }: IDocumentScreenProps) => {
 
           const filePath = RNFetchBlob.fs.dirs.DocumentDir + "/" + "Adhaar";
 
-           const s3Doc =  await uploadToS3(fileUri, categoryList[selectedParentIndex].key, docname, ".pdf");
+         //  const s3Doc =  await uploadToS3(fileUri, categoryList[selectedParentIndex].key, docname, ".pdf");
            
-          if(s3Doc.status==200){
-            console.log('Document uploaded to s3 successfully!!!', s3Doc)
+         // if(s3Doc.status==200){
+           // console.log('Document uploaded to s3 successfully!!!', s3Doc)
             var documentDetails: IDocumentProps = {
               //    name: fileUri?.file?.name,
               documentName: fileUri?.file?.name,
               id: `ID_VERIFICATION${Math.random()}${"random"}${Math.random()}`,
               path: filePath,
-              s3Path: s3Doc.fullPath,
+             // s3Path: s3Doc.fullPath,
               date: date?.date,
               time: date?.time,
               txId: "e4343434343434443",
@@ -430,18 +430,18 @@ const categoryScreen = ({ navigation, route }: IDocumentScreenProps) => {
               setsuccessResponse(false);
               navigation.navigate("Documents");
             }, 2000);
-         }else{
-          showPopup(
-            "Error",
-            "An error occurred while uploading the document. Please try again",
-            [
-              {
-                text: "OK",
-                onPress: () => setPopupVisible(false),
-              },
-            ]
-          );
-         }
+        //  }else{
+        //   showPopup(
+        //     "Error",
+        //     "An error occurred while uploading the document. Please try again",
+        //     [
+        //       {
+        //         text: "OK",
+        //         onPress: () => setPopupVisible(false),
+        //       },
+        //     ]
+        //   );
+        //  }
 
        
           // const s3uploadRes = await uploadToS3(fileUri, categoryList[selectedParentIndex].key, docname, ".pdf");
@@ -464,16 +464,16 @@ const categoryScreen = ({ navigation, route }: IDocumentScreenProps) => {
             ]?.value?.filter((data: any) => data.isSelected);
             const filePath = RNFetchBlob.fs.dirs.DocumentDir + "/" + "Adhaar";
 
-            const s3Doc = await uploadToS3(fileUri, categoryList[selectedParentIndex].key, docname, ".jpg");
+           // const s3Doc = await uploadToS3(fileUri, categoryList[selectedParentIndex].key, docname, ".jpg");
 
-            if (s3Doc.status == 200) {
-              console.log('Document uploaded to s3 successfully!!!', s3Doc)
+           // if (s3Doc.status == 200) {
+            //  console.log('Document uploaded to s3 successfully!!!', s3Doc)
               var documentDetails: IDocumentProps = {
                 id: `ID_VERIFICATION${Math.random()}${selectedDocument}${Math.random()}`,
                 documentName: `${categoryList[selectedParentIndex].key} (${document[0]?.title})`,
                 //  name: `${categoryList[selectedParentIndex].key} (${document[0]?.title})`,
                 path: filePath,
-                s3Path: s3Doc.fullPath,
+              //  s3Path: s3Doc.fullPath,
                 date: date?.date,
                 time: date?.time,
                 txId: "e4343434343434443",
@@ -498,20 +498,20 @@ const categoryScreen = ({ navigation, route }: IDocumentScreenProps) => {
                 setsuccessResponse(false);
                 navigation.navigate("Documents");
               }, 2000);
-            }
+            // }
 
-            else {
-              showPopup(
-                "Error",
-                "An error occurred while uploading the document. Please try again",
-                [
-                  {
-                    text: "OK",
-                    onPress: () => setPopupVisible(false),
-                  },
-                ]
-              );
-            }
+            // else {
+            //   showPopup(
+            //     "Error",
+            //     "An error occurred while uploading the document. Please try again",
+            //     [
+            //       {
+            //         text: "OK",
+            //         onPress: () => setPopupVisible(false),
+            //       },
+            //     ]
+            //   );
+            // }
 
         
             // const s3uploadRes = await uploadToS3(fileUri, categoryList[selectedParentIndex].key, docname, ".jpg");

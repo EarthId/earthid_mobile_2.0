@@ -36,6 +36,12 @@ import Dev5 from "../screens/onboarding/newDesigns/dev5";
 import Dev6 from "../screens/onboarding/newDesigns/dev6";
 import Dev7 from "../screens/onboarding/newDesigns/dev7";
 import RegisterOTP from "../screens/UploadQr/RegisterOTP";
+import Consent from "../screens/Consent";
+import GoogleDriveBackupScreen from "../screens/onboarding/newDesigns/googleDriveBackup";
+import DropboxBackupScreen from "../screens/onboarding/newDesigns/DropboxBackupScreen";
+import Recovery from "../screens/onboarding/newDesigns/recovery";
+import GoogleDriveRestoreScreen from "../screens/onboarding/newDesigns/GoogleDriverestoreScreen";
+import DropboxRestoreScreen from "../screens/onboarding/newDesigns/DropboxRestoreScreen";
 
 // Before rendering any navigation stack
 const animations: any = SlidAnimation;
@@ -70,7 +76,13 @@ export default function RootNavigator() {
     Dev5: Dev5,
     Dev6: Dev6,
     Dev7: Dev7,
-    RegisterOTP:RegisterOTP
+    RegisterOTP:RegisterOTP,
+    Consent:Consent,
+    GoogleDriveBackupScreen:GoogleDriveBackupScreen,
+    DropboxBackupScreen:DropboxBackupScreen,
+    Recovery:Recovery,
+    GoogleDriveRestoreScreen:GoogleDriveRestoreScreen,
+    DropboxRestoreScreen:DropboxRestoreScreen
   };
 
   function AuthStack() {

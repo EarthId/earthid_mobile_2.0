@@ -27,7 +27,7 @@ const Register = ({ navigation }: IHomeScreenProps) => {
           isBack
           letfIconPress={() => navigation.goBack()}
           isLogoAlone={true}
-          headingText="Choose Cloud Service"
+          headingText="Backup"
           linearStyle={styles.linearStyle}
           containerStyle={{
             iconStyle: {
@@ -80,7 +80,7 @@ const Register = ({ navigation }: IHomeScreenProps) => {
             >
               Please select your cloud service provider
             </GenericText>
-            <Button
+            {/* <Button
               selected={false}
               disabled={false}
               onPress={() => {
@@ -96,27 +96,48 @@ const Register = ({ navigation }: IHomeScreenProps) => {
                 },
               }}
               title="ICLOUD"
-            ></Button>
-
+            ></Button> */}
+<View style={{ marginTop: 20 }}>
+  <Button
+    selected={false}
+    disabled={false}
+    onPress={() => {
+      // navigate to the progress screen that runs the whole flow
+      navigation.navigate('Dev');
+    }}
+    style={{
+      buttonContainer: {
+        opacity: 1,
+        backgroundColor: "#fff",
+        elevation: 2,
+        borderColor: Screens.colors.primary,
+        iconStyle: Screens.colors.primary,
+      },
+    }}
+    title="EARTHID DEFAULT"
+  />
+</View>
 <View style={{ marginTop: -20 }}>
-              <Button
-                selected={false}
-                disabled={false
-                }
-                onPress={() => {}}
-                style={{
-                  buttonContainer: {
-                    opacity: 1,
-                    backgroundColor: "#fff",
-                    elevation: 2,
-                    borderColor: Screens.colors.primary,
-                    iconStyle: Screens.colors.primary,
-                  },
-                }}
-                title="GOOGLE DRIVE"
-              ></Button>
-            </View>
-            <View style={{ marginTop: -20 }}>
+  <Button
+    selected={false}
+    disabled={false}
+    onPress={() => {
+      // navigate to the progress screen that runs the whole flow
+      navigation.navigate('GoogleDriveBackupScreen');
+    }}
+    style={{
+      buttonContainer: {
+        opacity: 1,
+        backgroundColor: "#fff",
+        elevation: 2,
+        borderColor: Screens.colors.primary,
+        iconStyle: Screens.colors.primary,
+      },
+    }}
+    title="GOOGLE DRIVE"
+  />
+</View>
+            {/* <View style={{ marginTop: -20 }}>
               <Button
                 selected={false}
                 disabled={false
@@ -133,13 +154,15 @@ const Register = ({ navigation }: IHomeScreenProps) => {
                 }}
                 title="ONEDRIVE"
               ></Button>
-            </View>
+            </View> */}
             <View style={{ marginTop: -20 }}>
               <Button
                 selected={false}
                 disabled={false
                 }
-                onPress={() => {}}
+                onPress={() => {
+    navigation.navigate('DropboxBackupScreen'); // 👈 go to Dropbox flow now
+  }}
                 style={{
                   buttonContainer: {
                     opacity: 1,

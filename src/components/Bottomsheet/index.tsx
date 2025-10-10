@@ -21,7 +21,9 @@ const BottomSheet = ({
     if (isVisible) {
       RBSheets.current.open();
     } else {
-      RBSheets.current.close();
+      setTimeout(() => {
+        RBSheets.current?.close();
+      }, 100); 
     }
   }, [isVisible]);
   return (

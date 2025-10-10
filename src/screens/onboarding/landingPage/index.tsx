@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
+  Alert,
+  InteractionManager,
 } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -36,9 +38,13 @@ import RNFetchBlob from "rn-fetch-blob";
 import AnimatedLoader from "../../../components/Loader/AnimatedLoader";
 import SuccessPopUp from "../../../components/Loader";
 import ErrorPopUp from "../../../components/Loader/errorPopup";
+import axios from "axios";
 
 import GLOBALS from "../../../utils/globals";
 import { AWS_API_BASE } from "../../../constants/URLContstants";
+import { TextInput } from "react-native-gesture-handler";
+import IDVNewLaunchScreen from "../../../screens/bottomTabs/documentTab/IDVNewLaunchScreen";
+import CustomPopupIDV from "../../../components/Loader/idvPopup";
 
 const resolveAssetSource = require('react-native/Libraries/Image/resolveAssetSource');
 const earthIDLogo = require('../../../../resources/images/earthidLogoBlack.png');
@@ -97,7 +103,16 @@ const landingPage = ({ navigation }: IHomeScreenProps) => {
   let documentsDetailsList = useAppSelector((state) => state.Documents);
   const [verifyVcCred, setverifyVcCred] = useState<any>();
 
+  const [code, setCode] = useState("");
+  const [isPopupVisible, setPopupVisible] = useState(false);
+  const [isIdvLoading, setIDVLoading] = useState(false);
 
+  const [isLaunchVisible, setIsLaunchVisible] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+  
+
+  const clientId = 'earthid-client-12345';
+const apiKey = '8f8e28b6-7a6a-4ad2-9ef7-b2c2d10e6a4e';
 
   useEffect(()=>{
     defaultVcFeature()
@@ -154,6 +169,108 @@ const landingPage = ({ navigation }: IHomeScreenProps) => {
   useEffect(() => {
     navigationCheck();
   }, []);
+
+  const veriffSdkIdvLaunch = async () => {
+    console.log('Clicked register with doc')
+    const idvFlag = await AsyncStorage.getItem("setIDVFlag");
+
+    // Check if the flag is true
+    if (idvFlag === "true") {
+      console.log('Got IDV flag')
+      const user_id =  await AsyncStorage.getItem("user_id");
+      // Launch Veriff SDK
+      await AsyncStorage.setItem("sdkStatus", "false"); 
+     // veriffSdkLaunch(user_id);
+     setIsLaunchVisible(true)
+    } else {
+      console.log('No IDV flag')
+      await AsyncStorage.setItem("sdkStatus", "false"); 
+     //setIsLaunchVisible(true)
+      // Show the IDV modal
+      setPopupVisible(true);
+    }
+  };
+
+
+  const updateFeatureFlag = async (user_id, feature_name, status, valid_years) => {
+    try {
+      const response = await axios.post('https://activate.myearth.id/feature-flags', {
+        user_id,
+        feature_name,
+        status,
+        valid_years,
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          "client-id": clientId, 
+            "x-api-key": apiKey,
+        },
+      });
+  
+      console.log('Feature flag updated successfully:', response.data);
+      return response.data; // Return response for further use if needed
+    } catch (error) {
+      console.error('Error updating feature flag:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+
+
+
+const handleVerifyCode = async () => {
+  if (!code) {
+    setPopupVisible(false);
+    Alert.alert("Error", "Please enter a code.");
+    return;
+  }
+
+  try {
+    setPopupVisible(false);
+   // setIDVLoading(true);
+    // Call the verification API
+    const response = await axios.post(
+      "https://activate.myearth.id/verify-idv-code",
+      { code },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "client-id": clientId, // Pass client-id from the function parameter
+          "x-api-key": apiKey, // Pass x-api-key from the function parameter
+        },
+      }
+    );
+    const { status, message, user_id } = response.data;
+
+    if (status === "success") {
+      // Code is valid, launch Veriff SDK
+      console.log("Verification Successful");
+      //Alert.alert("Success", "Code verified. Launching Veriff SDK...");
+await updateFeatureFlag(user_id, "IDV", "true", "1")
+await AsyncStorage.setItem("user_id", user_id);
+await AsyncStorage.setItem("setIDVFlag", "true");
+    //  setPopupVisible(false);
+     InteractionManager.runAfterInteractions(() => {
+       setTimeout(() => {
+         setIsLaunchVisible(true);
+       }, 300); // 300ms delay for smoother transition
+     });
+     //await veriffSdkLaunch(user_id);
+    } else {
+      // Code is invalid
+      setPopupVisible(false);
+      Alert.alert("Error", "Invalid code. Please try again.");
+      return
+    }
+  } catch (error) {
+    console.error("Verification Error:", error);
+    setPopupVisible(false);
+    Alert.alert("Error", "Failed to verify the code. Please try again later.");
+    return
+  } finally {
+   // setIDVLoading(false);
+   setPopupVisible(false);
+  }
+};
 
   const navigationCheck = async () => {
     const pageName = await AsyncStorage.getItem("pageName");
@@ -254,19 +371,42 @@ const landingPage = ({ navigation }: IHomeScreenProps) => {
   
 
 
-  const veriffSdkLaunch = async () => {
+  const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+  
+  
+        const veriffSdkLaunch = async () => {
+          setIsLoading(true);
+          let user_id = await AsyncStorage.getItem("user_id");
 
-    const sessionRes = await createVerification()
+        if (!user_id && userDetails?.responseData?.earthId) {
+          user_id = userDetails.responseData.earthId;
+        }
+        
+        console.log("Resolved user_id:", user_id);
+
+              const sessionRes = await createVerification()
+  
+             
+
+   // Alert.alert("Alert1", "Created Veriff's session");
+    // Properly displaying sessionRes
+//Alert.alert("Alert2", JSON.stringify(sessionRes, null, 2));
+setIsLoading(false)
+setIsLaunchVisible(false);
+
+await delay(1000); // Waits for 2 seconds
+console.log('Added delay of 2 secs');
 
     if(sessionRes.status=="success"){
-
+     // Alert.alert("Alert3", "Session success");
       const sessionUrl = sessionRes.verification.url
       const sessionId = sessionRes.verification.id
   
-      
-  
+     // Alert.alert("Alert4", `Session ID: ${sessionId}\nSession URL: ${sessionUrl}`);
+    
       var result = await VeriffSdk.launchVeriff({
         sessionUrl: sessionUrl,
+        customIntroScreen: true,
         branding: {
           logo: resolveAssetSource(isEarthId() ? earthIDLogo : globalIDLogo), // see alternative options for logo below
           //background: '#fffff',
@@ -322,10 +462,10 @@ const landingPage = ({ navigation }: IHomeScreenProps) => {
    console.log("Document Images", getDocImages)
    console.log("Media Image", getImage)
 
-  await uploadToS3(getImage, "ID", "ID Document", ".jpg");
+ //await uploadToS3(getImage, "ID", "ID Document", ".jpg");
   //const fileNameWithExtension = selectedDocument.includes('.') ? selectedDocument : `${selectedDocument}.jpg`;
-         s3fullPath = `cognito/${GLOBALS.awsID}/ID/ID Document.jpg`;
-         console.log('fullPath----------------:', s3fullPath);
+        // s3fullPath = `cognito/${GLOBALS.awsID}/ID/ID Document.jpg`;
+        // console.log('fullPath----------------:', s3fullPath);
   
    await createPayLoadFromDocumentData(uploadDocResponseData )
   
@@ -411,85 +551,85 @@ const landingPage = ({ navigation }: IHomeScreenProps) => {
        // } else {
          console.log("indexData", "index2");
          
-         var date = dateTime();
-         const filePath = RNFetchBlob.fs.dirs.DocumentDir + "/" + "Adhaar";
-         var documentDetails: IDocumentProps = {
-           id: `ID_VERIFICATION${Math.random()}${selectedDocument}${Math.random()}`,
-           // name: selectedDocument,
-           documentName: selectedDocument,
-           path: filePath,
-           s3Path: s3fullPath,
-           date: date?.date,
-           time: date?.time,
-           //txId: data?.result,
-           txId: sessionId,
-           docType: "jpg",
-           docExt: ".jpg",
-           processedDoc: "",
-           base64: getImage,
-           categoryType: selectedDocument && selectedDocument?.split("(")[0]?.trim(),
-           docName: "ID Document",
-           isVerifyNeeded: true,
-           isLivenessImage: null,
-           name: "",
-           vc: undefined,
-           isVc: false,
-           signature: undefined,
-           typePDF: undefined,
-           verifiableCredential: undefined
-         };
+        //  var date = dateTime();
+        //  const filePath = RNFetchBlob.fs.dirs.DocumentDir + "/" + "Adhaar";
+        //  var documentDetails: IDocumentProps = {
+        //    id: `ID_VERIFICATION${Math.random()}${selectedDocument}${Math.random()}`,
+        //    // name: selectedDocument,
+        //    documentName: selectedDocument,
+        //    path: filePath,
+        //    s3Path: s3fullPath,
+        //    date: date?.date,
+        //    time: date?.time,
+        //    //txId: data?.result,
+        //    txId: sessionId,
+        //    docType: "jpg",
+        //    docExt: ".jpg",
+        //    processedDoc: "",
+        //    base64: getImage,
+        //    categoryType: selectedDocument && selectedDocument?.split("(")[0]?.trim(),
+        //    docName: "ID Document",
+        //    isVerifyNeeded: true,
+        //    isLivenessImage: null,
+        //    name: "",
+        //    vc: undefined,
+        //    isVc: false,
+        //    signature: undefined,
+        //    typePDF: undefined,
+        //    verifiableCredential: undefined
+        //  };
   
-         var DocumentList = documentsDetailsList?.responseData
-           ? documentsDetailsList?.responseData
-           : [];
-         var documentDetails1: IDocumentProps = {
-           id: `ID_VERIFICATION${Math.random()}${"selectedDocument"}${Math.random()}`,
-           name: "Proof of age",
-           path: "filePath",
-           documentName: "Proof of age",
-           categoryType: "ID",
-           date: date?.date,
-           time: date?.time,
-           txId: "data?.result",
-           docType: verifyVcCred?.type[1],
-           docExt: ".jpg",
-           processedDoc: "",
-           isVc: true,
-           vc: JSON.stringify({
-             name: "Proof of age",
-             documentName: "Acknowledgement Token",
-             path: "filePath",
-             date: date?.date,
-             time: date?.time,
-             txId: "data?.result",
-             docType: "pdf",
-             docExt: ".jpg",
-             processedDoc: "",
-             isVc: true,
-           }),
-           verifiableCredential: verifyVcCred,
-           docName: "",
-           base64: undefined,
-           isLivenessImage: "",
-           signature: undefined,
-           typePDF: undefined
-         };
+        //  var DocumentList = documentsDetailsList?.responseData
+        //    ? documentsDetailsList?.responseData
+        //    : [];
+        //  var documentDetails1: IDocumentProps = {
+        //    id: `ID_VERIFICATION${Math.random()}${"selectedDocument"}${Math.random()}`,
+        //    name: "Proof of age",
+        //    path: "filePath",
+        //    documentName: "Proof of age",
+        //    categoryType: "ID",
+        //    date: date?.date,
+        //    time: date?.time,
+        //    txId: "data?.result",
+        //    docType: verifyVcCred?.type[1],
+        //    docExt: ".jpg",
+        //    processedDoc: "",
+        //    isVc: true,
+        //    vc: JSON.stringify({
+        //      name: "Proof of age",
+        //      documentName: "Acknowledgement Token",
+        //      path: "filePath",
+        //      date: date?.date,
+        //      time: date?.time,
+        //      txId: "data?.result",
+        //      docType: "pdf",
+        //      docExt: ".jpg",
+        //      processedDoc: "",
+        //      isVc: true,
+        //    }),
+        //    verifiableCredential: verifyVcCred,
+        //    docName: "",
+        //    base64: undefined,
+        //    isLivenessImage: "",
+        //    signature: undefined,
+        //    typePDF: undefined
+        //  };
   
-         var DocumentList = documentsDetailsList?.responseData
-           ? documentsDetailsList?.responseData
-           : [];
-         DocumentList.push(documentDetails);
-        DocumentList.push(documentDetails1);
-         dispatch(saveDocuments(DocumentList));
+        //  var DocumentList = documentsDetailsList?.responseData
+        //    ? documentsDetailsList?.responseData
+        //    : [];
+        //  DocumentList.push(documentDetails);
+        // DocumentList.push(documentDetails1);
+        //  dispatch(saveDocuments(DocumentList));
         
-         setsuccessResponse(true);
-         getHistoryReducer.isSuccess = false;
+        //  setsuccessResponse(true);
+        //  getHistoryReducer.isSuccess = false;
          setTimeout(async () => {
            setsuccessResponse(false);
            const item = await AsyncStorage.getItem("flow");
             const registrationOption = "RegisterWithDoc"
              // generateVc()
-             navigation.navigate("RegisterScreen", {combinedData, registrationOption});
+             navigation.navigate("RegisterScreen", {combinedData, registrationOption, s3fullPath, sessionId, getImage, user_id, uploadDocResponseData});
              
            
          }, 2000);
@@ -526,6 +666,7 @@ const landingPage = ({ navigation }: IHomeScreenProps) => {
   
 
     }else{
+      //Alert.alert("Alert5", JSON.stringify(sessionRes, null, 2));
       console.log("Didn't recieve uploaded doc data")
      seterrorResponse(true)
       throw new Error('An error occurred during image validation');
@@ -622,7 +763,7 @@ const landingPage = ({ navigation }: IHomeScreenProps) => {
                 //     type: { data: "reg" },
                 //   })
                 // }
-                onPress={veriffSdkLaunch}
+                onPress={veriffSdkIdvLaunch}
                 style={{
                   buttonContainer: {
                     backgroundColor: Screens.pureWhite,
@@ -891,6 +1032,66 @@ const landingPage = ({ navigation }: IHomeScreenProps) => {
   loadingText={"An error occurred. Please try again."}
   onHide={hideErrorPopup}
 />
+
+{/* <CustomPopupIDV
+  isVisible={isPopupVisible}
+  title="Enter IDV Code"
+  inputValue={code}
+  onInputChange={setCode}
+  buttons={[
+    { text: "Verify", onPress: handleVerifyCode },
+  ]}
+  onClose={() => setPopupVisible(false)}
+/> */}
+
+ {/* IDV Verification Popup */}
+ <IDVNewLaunchScreen isVisible={isLaunchVisible} isLoading={isLoading} onClose={() => setIsLaunchVisible(false)} onStartVerification={veriffSdkLaunch} />
+   
+   {/* Popup for Code Entry */}
+   <BottomSheet
+        isVisible={isPopupVisible}
+        onClose={() => setPopupVisible(false)}
+        height={200}
+      >
+        <View style={styles.popupContainer}>
+  <TextInput
+    style={[
+      styles.input,
+      { width: 300, alignSelf: "center", textAlign: "center" }, // 90% width and center alignment
+    ]}
+    placeholder="Enter Your Code"
+    value={code}
+    onChangeText={setCode}
+  />
+  <TouchableOpacity
+    style={{
+      marginTop: 10,
+      backgroundColor: Screens.colors.primary, // Set the background color
+      padding: 15,
+      borderRadius: 50,
+      alignItems: "center",
+      width: 300, // 90% width
+      alignSelf: "center", // Center the button
+    }}
+    onPress={handleVerifyCode}
+  >
+    <Text
+      style={{
+        color: "#FFFFFF", // Set the text color
+        fontSize: 16,
+        fontWeight: "bold",
+        textAlign: "center"
+      }}
+    >
+      Verify
+    </Text>
+  </TouchableOpacity>
+</View>
+
+      </BottomSheet> 
+
+      {isIdvLoading && <AnimatedLoader isLoaderVisible={isIdvLoading} loadingText="Verifying..." />}
+    
     </View>
   );
 };
@@ -994,6 +1195,20 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     marginLeft: 10,
     marginTop: -2,
+  },
+  popupContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  input: {
+    height: 50,
+    width: 300,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    marginBottom: 10,
   },
 });
 

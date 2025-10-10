@@ -79,47 +79,47 @@ const DocumentPreviewScreen = (props: any) => {
     }
   }, [error]);
 
-  function alertUploadDoc() {
-    console.log("fileUri?.type===", fileUri?.type);
-    if (type == "regDoc") {
-      uploadDocumentImage();
-    } else {
-      if (fileUri?.type === "application/pdf") {
-        uploadDoc("no");
-      } else {
-        Alert.alert(
-          "Confirmation!",
-          "Please confirm that this is a self-attested document",
-          [
-            {
-              text: "Yes",
-              onPress: () => {
-                if (type == "regDoc") {
-                  //  uploadDocumentImage();
-                  console.log("cancel");
-                } else {
-                  NetworkConnect();
-                }
-              },
-              style: "cancel",
-            },
-            {
-              text: "No",
-              onPress: () => {
-                if (type == "regDoc") {
-                  uploadDocumentImage();
-                } else {
-                  isNetworkConnect();
-                }
-                //  props.navigation.navigate("uploadDocumentsScreen")
-              },
-            },
-          ],
-          { cancelable: false }
-        );
-      }
-    }
-  }
+  // function alertUploadDoc() {
+  //   console.log("fileUri?.type===", fileUri?.type);
+  //   if (type == "regDoc") {
+  //     uploadDocumentImage();
+  //   } else {
+  //     if (fileUri?.type === "application/pdf") {
+  //       uploadDoc("no");
+  //     } else {
+  //       Alert.alert(
+  //         "Confirmation!",
+  //         "Please confirm that this is a self-attested document",
+  //         [
+  //           {
+  //             text: "Yes",
+  //             onPress: () => {
+  //               if (type == "regDoc") {
+  //                 //  uploadDocumentImage();
+  //                 console.log("cancel");
+  //               } else {
+  //                 NetworkConnect();
+  //               }
+  //             },
+  //             style: "cancel",
+  //           },
+  //           {
+  //             text: "No",
+  //             onPress: () => {
+  //               if (type == "regDoc") {
+  //                 uploadDocumentImage();
+  //               } else {
+  //                 isNetworkConnect();
+  //               }
+  //               //  props.navigation.navigate("uploadDocumentsScreen")
+  //             },
+  //           },
+  //         ],
+  //         { cancelable: false }
+  //       );
+  //     }
+  //   }
+  // }
 
   const NetworkConnect = () => {
     NetInfo.fetch().then((state) => {
@@ -178,41 +178,41 @@ const DocumentPreviewScreen = (props: any) => {
     props.navigation.goBack();
   };
 
-  function uploadDocumentImage() {
-    console.log("DocumentImage:::::", fileUri);
+  // function uploadDocumentImage() {
+  //   console.log("DocumentImage:::::", fileUri);
 
-    if (type == "regDoc") {
-      let image = {
-        uri: fileUri.uri,
-        name: fileUri.filename,
-        type: fileUri.type,
-      };
-      try {
-        console.log("image req=====", image);
-        setLoginLoading(true);
+  //   if (type == "regDoc") {
+  //     let image = {
+  //       uri: fileUri.uri,
+  //       name: fileUri.filename,
+  //       type: fileUri.type,
+  //     };
+  //     try {
+  //       console.log("image req=====", image);
+  //       setLoginLoading(true);
 
-        uploadRegDoc(uploadRegisterDocument, image, "FORM-DATA");
+  //       uploadRegDoc(uploadRegisterDocument, image, "FORM-DATA");
 
-        // props.navigation.navigate("DrawerNavigator", { response });
-      } catch (e) {
-        setLoginLoading(false);
-        console.log("DocumentError:::::", e);
-        console.log("DocumentError:::::", "ERROR");
-      }
-    }
-  }
+  //       // props.navigation.navigate("DrawerNavigator", { response });
+  //     } catch (e) {
+  //       setLoginLoading(false);
+  //       console.log("DocumentError:::::", e);
+  //       console.log("DocumentError:::::", "ERROR");
+  //     }
+  //   }
+  // }
   useEffect(() => {
     getSuperAdminApiCall(superAdminApi, {}, "GET");
   }, []);
 
-  useEffect(() => {
-    if (data) {
-      if (data?.data) {
-        setDocumentResponse(data?.data);
-        createPayLoadFromDocumentData(data?.data);
-      }
-    }
-  }, [data]);
+  // useEffect(() => {
+  //   if (data) {
+  //     if (data?.data) {
+  //       setDocumentResponse(data?.data);
+  //       createPayLoadFromDocumentData(data?.data);
+  //     }
+  //   }
+  // }, [data]);
   const handlePressb64 = (type: string) => {
     showPopup(
       'Unsupported file',
@@ -257,28 +257,28 @@ const DocumentPreviewScreen = (props: any) => {
     //   );
     // }
   };
-  const createPayLoadFromDocumentData = async (documentResponseData: any) => {
-    console.log(
-      "slsls",
-      documentResponseData?.ProcessedDocuments[0].ExtractedFields?.filter(
-        (item: any) => item.Name === "FullName"
-      )[0]
-    );
-    const username =
-      documentResponseData?.ProcessedDocuments[0].ExtractedFields?.filter(
-        (item: any) => item.Name === "FullName"
-      )[0]?.Value;
-    const trimmedEmail =
-      documentResponseData?.ProcessedDocuments[0].ExtractedFields?.filter(
-        (item: any) => item.Name === "FullName"
-      )[0]?.Value +
-      "ex" +
-      Math.random() +
-      "@gmail.com";
-    await AsyncStorage.setItem("userDetails", username.toString());
-    await AsyncStorage.setItem("flow", "documentflow");
-    props.navigation.navigate("categoryScreen", { fileUri });
-  };
+  // const createPayLoadFromDocumentData = async (documentResponseData: any) => {
+  //   console.log(
+  //     "slsls",
+  //     documentResponseData?.ProcessedDocuments[0].ExtractedFields?.filter(
+  //       (item: any) => item.Name === "FullName"
+  //     )[0]
+  //   );
+  //   const username =
+  //     documentResponseData?.ProcessedDocuments[0].ExtractedFields?.filter(
+  //       (item: any) => item.Name === "FullName"
+  //     )[0]?.Value;
+  //   const trimmedEmail =
+  //     documentResponseData?.ProcessedDocuments[0].ExtractedFields?.filter(
+  //       (item: any) => item.Name === "FullName"
+  //     )[0]?.Value +
+  //     "ex" +
+  //     Math.random() +
+  //     "@gmail.com";
+  //   await AsyncStorage.setItem("userDetails", username.toString());
+  //   await AsyncStorage.setItem("flow", "documentflow");
+  //   props.navigation.navigate("categoryScreen", { fileUri });
+  // };
 
   useEffect(() => {
     setKey(Date.now());

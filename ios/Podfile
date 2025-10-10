@@ -31,7 +31,7 @@ target 'GlobalId' do
 
   pod 'RNShareMenu', :path => '../node_modules/react-native-share-menu'
   pod 'react-native-camera', path: '../node_modules/react-native-camera', subspecs: [
-  'FaceDetectorMLKit'
+  # 'FaceDetectorMLKit'
 ]
   use_react_native!(
     :path => config[:reactNativePath],

@@ -55,9 +55,37 @@ import CheckBox from "@react-native-community/checkbox";
 import { addConsent } from "../../../utils/consentApis";
 import CustomPopup from "../../../components/Loader/customPopup";
 
+import RNFetchBlob from "rn-fetch-blob";
+import {registernewDID } from "../../../utils/newSSIAPIs";
+
 interface IRegister {
   navigation: any;
-  route: RouteProp<{ params: { combinedData: any, registrationOption: any } }, "params">;
+  route: RouteProp<{ params: { combinedData: any, registrationOption: any, s3fullPath:any, sessionId:any, getImage:any, user_id:any, uploadDocResponseData: any } }, "params">;
+}
+
+export interface IDocumentProps {
+  id: string;
+  name: string;
+  path: string;
+  date: string;
+  time: string;
+  txId: string;
+  documentName: string;
+  docName: string;
+  isLivenessImage: string;
+  docType: string;
+  docExt: string;
+  processedDoc: string;
+  vc: any;
+  isVc: boolean;
+  base64: any;
+  pdf?: boolean;
+  categoryType?: any;
+  color?: string;
+  isVerifyNeeded?: boolean;
+  signature: any;
+  typePDF: any;
+  verifiableCredential: any;
 }
 
 const Register = ({ navigation, route }: IRegister) => {
@@ -106,13 +134,15 @@ const Register = ({ navigation, route }: IRegister) => {
   const issurDid = keys?.responseData?.issuerDid;
   const UserDid = keys?.responseData?.newUserDid;
   const privateKey = keys?.responseData?.generateKeyPair?.privateKey;
-  const { combinedData, registrationOption } = route.params;
+  const { combinedData, registrationOption, s3fullPath, sessionId, getImage, user_id, uploadDocResponseData } = route.params;
   let url: any = `https://ssi-test.myearth.id/api/user/sign?issuerDID=${issurDid}`;
   let requesturl: any = `https://ssi-test.myearth.id/api/issuer/verifiableCredential?isCryptograph=${false}&downloadCryptograph=${false}`;
  
 
   const ssiBaseUrl = "https://ssi-test.myearth.id/api"
   const authorizationKey = "01a41742-aa8e-4dd6-8c71-d577ac7d463c"
+
+    const getHistoryReducer = useAppSelector((state) => state.getHistoryReducer);
 
   useEffect(() => {
     getItem();
@@ -337,7 +367,7 @@ const Register = ({ navigation, route }: IRegister) => {
                           console.log('AgeProofVC response', response.data.data.verifiableCredential)
                           //const verifiableCredential = response.data.data.verifiableCredential;
                         
-                          return response.data.data.verifiableCredential;
+                          return response.data.data;
                     
                       } catch (error) {
                           console.log(error);
@@ -345,6 +375,47 @@ const Register = ({ navigation, route }: IRegister) => {
                       }
                     };
 
+                    const generateIdvProof = async (userId: any, idType: any, score: any) => {
+                      try {
+                          const data = {
+                              schemaName: "IDVProofSchema:1",
+                              isEncrypted: true,
+                              dependantVerifiableCredential: [],
+                              credentialSubject: {
+                                  earthId: userDetails?.responseData?.earthId,
+                                  userId: userId,
+                                  idType: idType, // Example, replace with dynamic value if needed
+                                  score: score, // Example, replace with a calculated or dynamic score
+                                  timestamp: new Date().toISOString(), // Current timestamp in ISO format
+                                  metadata: JSON.stringify({
+                                      source: "IDVProvider",
+                                      details: "Additional metadata information"
+                                  }) // Example JSON metadata
+                              }
+                          };
+                  
+                          const config = {
+                              method: 'post',
+                              url: `${ssiBaseUrl}/issuer/verifiableCredential`,
+                              headers: {
+                                  'X-API-KEY': authorizationKey,
+                                  did: keys.responseData.newUserDid,
+                                  publicKey: keys.responseData.generateKeyPair.publicKey,
+                                  'Content-Type': 'application/json',
+                              },
+                              data: JSON.stringify(data),
+                          };
+                  
+                          console.log('IDVProofVC Request', config);
+                          const response = await axios.request(config);
+                          console.log('IDVProofVC Response', response.data.data.verifiableCredential);
+                  
+                          return response.data.data.verifiableCredential;
+                      } catch (error) {
+                          console.error('Error generating IDVProof:', error);
+                          throw error;
+                      }
+                  };
       
   const addConsentCall = async () => {
     try{
@@ -368,9 +439,167 @@ console.log('Consent Api response------:', consentApiCall)
   }      
 
 
+  const saveDocVC = async (docVc, ageVc, idvVc) => {
+    const selectedDocument = "ID"
+      // verifiAPICall()
+   
+      setTimeout(async() => {
+       // const index = documentsDetailsList?.responseData?.findIndex(
+       //   (obj: { id: any; }) => obj?.id === selectedItem?.id
+       // );
+       // console.log("index", index);
+       // if (selectedItem) {
+       //   console.log("indexData", "index1");
+       //   setsuccessResponse(true);
+  
+       //   const obj = documentsDetailsList?.responseData[index];
+       //   obj.documentName = selectedDocument;
+       //   obj.categoryType =
+       //     selectedDocument && selectedDocument?.split("(")[0]?.trim();
+       //   dispatch(
+       //     updateDocuments(documentsDetailsList?.responseData, index, obj)
+       //   );
+       //   setTimeout(async () => {
+       //     setsuccessResponse(false);
+       //     const item = await AsyncStorage.getItem("flow");
+       //     //const userDetails = await AsyncStorage.getItem("userDetails");
+       //     if (userDetails.responseData) {
+       //       //props.navigation.navigate("Documents");
+       //     } else {
+       //       // generateVc()
+       //       navigation.navigate("RegisterScreen");
+             
+       //     }
+       //   }, 2000);
+       // } else {
+         console.log("indexData", "index2");
+         
+         var date = dateTime();
+         const filePath = RNFetchBlob.fs.dirs.DocumentDir + "/" + "Adhaar";
+         var documentDetails: IDocumentProps = {
+           id: `ID_VERIFICATION${Math.random()}${selectedDocument}${Math.random()}`,
+           // name: selectedDocument,
+           documentName: selectedDocument,
+           path: filePath,
+          // s3Path: s3fullPath,
+           date: date?.date,
+           time: date?.time,
+           //txId: data?.result,
+           txId: sessionId,
+           docType: "jpg",
+           docExt: ".jpg",
+           processedDoc: "",
+           base64: getImage,
+           categoryType: selectedDocument && selectedDocument?.split("(")[0]?.trim(),
+           docName: "ID Document",
+           isVerifyNeeded: true,
+           isLivenessImage: null,
+           name: "",
+           vc: docVc,
+           isVc: false,
+           signature: undefined,
+           typePDF: undefined,
+           verifiableCredential: docVc
+         };
+  
+         var DocumentList = documentsDetailsList?.responseData
+           ? documentsDetailsList?.responseData
+           : [];
+         var documentDetails1: IDocumentProps = {
+           id: `ID_VERIFICATION${Math.random()}${"selectedDocument"}${Math.random()}`,
+           name: "Proof of Age",
+           path: "filePath",
+           documentName: "Proof of Age",
+           categoryType: "ID",
+           date: date?.date,
+           time: date?.time,
+           txId: "data?.result",
+           docType: ageVc?.type[1],
+           docExt: ".jpg",
+           processedDoc: "",
+           isVc: true,
+           vc: JSON.stringify({
+             name: "Proof of Age",
+             documentName: "Acknowledgement Token",
+             path: "filePath",
+             date: date?.date,
+             time: date?.time,
+             txId: "data?.result",
+             docType: "pdf",
+             docExt: ".jpg",
+             processedDoc: "",
+             isVc: true,
+           }),
+           verifiableCredential: ageVc,
+           docName: "",
+           base64: undefined,
+           isLivenessImage: "",
+           signature: undefined,
+           typePDF: undefined
+         };
+  
+         var DocumentList = documentsDetailsList?.responseData
+           ? documentsDetailsList?.responseData
+           : [];
+
+           
+          var documentDetails2: IDocumentProps = {
+                     id: `ID_VERIFICATION${Math.random()}${"selectedDocument"}${Math.random()}`,
+                     name: "Proof of IDV",
+                     path: "filePath",
+                     documentName: "Proof of IDV",
+                     categoryType: "ID",
+                     date: date?.date,
+                     time: date?.time,
+                     txId: "data?.result",
+                     docType: idvVc?.type[1],
+                     docExt: ".jpg",
+                     processedDoc: "",
+                     isVc: true,
+                     vc: JSON.stringify({
+                       name: "Proof of IDV",
+                       documentName: "Acknowledgement Token",
+                       path: "filePath",
+                       date: date?.date,
+                       time: date?.time,
+                       txId: "data?.result",
+                       docType: "pdf",
+                       docExt: ".jpg",
+                       processedDoc: "",
+                       isVc: true,
+                     }),
+                     verifiableCredential: idvVc,
+                     docName: "",
+                     base64: undefined,
+                     isLivenessImage: "",
+                     signature: undefined,
+                     typePDF: undefined
+                   };
+             
+                   var DocumentList = documentsDetailsList?.responseData
+                     ? documentsDetailsList?.responseData
+                     : [];
+         
+                 DocumentList.push(documentDetails);
+                DocumentList.push(documentDetails1);
+                DocumentList.push(documentDetails2);
+
+         dispatch(saveDocuments(DocumentList));
+        
+         //setsuccessResponse(true);
+         getHistoryReducer.isSuccess = false;
+       //}
+     }, 200);
+  }
+
+
   const _registerAction = async ({ publicKey }: any) => {
     const token = await getDeviceId();
     const deviceName = await getDeviceName();
+
+    const newDidDetails = await registernewDID();
+    console.log('NewDIDDetails-------------:', newDidDetails)
+
     console.log('superAdminResponse',superAdminResponse)
     if (superAdminResponse && superAdminResponse[0]?.Id) {
       const payLoad: IUserAccountRequest = {
@@ -413,14 +642,22 @@ console.log('Consent Api response------:', consentApiCall)
       console.log('UploadedDocVc is:::::::::::', uploadDocVcResponse)
 
       if(uploadDocVcResponse){
-        await AsyncStorage.setItem("uploadedDocVc", JSON.stringify(uploadDocVcResponse));
+       // await AsyncStorage.setItem("uploadedDocVc", JSON.stringify(uploadDocVcResponse));
+       console.log('Sending details to the api3')
       }
-
+      let ageProofVC
+        
       if(combinedData.dateOfBirth!==null){
-       const ageProofVC = await generateAgeProof(combinedData.dateOfBirth)
-await AsyncStorage.setItem("ageProofVC", JSON.stringify(ageProofVC));
+      const ageProofVcFull = await generateAgeProof(combinedData.dateOfBirth)
+await AsyncStorage.setItem("ageProofVC", JSON.stringify(ageProofVcFull));
+ageProofVC = ageProofVcFull.verifiableCredential
+console.log('this is ageProofVC----->', ageProofVC)
       }
+      const idvVc = await generateIdvProof(user_id, uploadDocResponseData.document.type.value, uploadDocResponseData.decisionScore)
+  console.log('This is idvVc',idvVc)
       
+  await saveDocVC(uploadDocVcResponse, ageProofVC, idvVc)  
+  await AsyncStorage.setItem("setIDVFlag", "false");
     })();
     }
     (async () => {
@@ -435,6 +672,7 @@ await AsyncStorage.setItem("ageProofVC", JSON.stringify(ageProofVC));
     if (saveFeaturesForVc?.isVCFeatureEnabled) {
       createVerifiableCredentials().then(() => {
         setLoading(false);
+        setLoginLoading(false)
         setTimeout(() => {
           setsuccessResponse(false);
           navigation.navigate("BackupIdentity");
@@ -442,6 +680,7 @@ await AsyncStorage.setItem("ageProofVC", JSON.stringify(ageProofVC));
       });
     } else {
       setLoading(false);
+      setLoginLoading(false)
       setTimeout(() => {
         setsuccessResponse(false);
         navigation.navigate("BackupIdentity");
@@ -451,14 +690,15 @@ await AsyncStorage.setItem("ageProofVC", JSON.stringify(ageProofVC));
   if (userDetails && userDetails?.isAccountCreatedFailure) {
     userDetails.isAccountCreatedFailure = false;
     if (userDetails?.errorMesssage && isArray(userDetails?.errorMesssage)) {
+      console.log("userDetails?.errorMesssage1", userDetails?.errorMesssage);
       SnackBar({
         indicationMessage: userDetails?.errorMesssage[0],
       });
     } else {
-      console.log("userDetails?.errorMesssage", userDetails?.errorMesssage);
+      console.log("userDetails?.errorMesssage2", userDetails?.errorMesssage);
       showPopup(
         "Warning",
-        "Your EarthID already exists. Please recover it using your QR code generated during the registration process. If you have lost your QR code, please create a new EarthID using a different username, email, and phone number.",
+        "Your EarthID already exists. Please recover it using your QR code generated during the registration process. If you have lost your QR code, please create a new EarthID using a different email, and phone number.",
         [
           {
             text: "OK",
@@ -470,6 +710,7 @@ await AsyncStorage.setItem("ageProofVC", JSON.stringify(ageProofVC));
       );
     }
   }
+
 
 
 
@@ -946,7 +1187,7 @@ await AsyncStorage.setItem("ageProofVC", JSON.stringify(ageProofVC));
           ></Loader>
 
           <Spinner
-            visible={userDetails?.isLoading || keys?.isLoading || loading}
+            visible={userDetails?.isLoading || keys?.isLoading || loading || loginLoading}
             textContent={"Loading..."}
             textStyle={styles.spinnerTextStyle}
           />

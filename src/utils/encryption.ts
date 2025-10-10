@@ -105,3 +105,5 @@ export const getUserDetails = (response: string[]): IUser => {
 export const blobToBase64 = async (data: any, encoding = "base64") => {
   return fs.readFile(data, encoding);
 };
+
+

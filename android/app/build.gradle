@@ -100,10 +100,10 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         missingDimensionStrategy 'react-native-camera', 'mlkit' 
-        versionCode 28
-        versionName "5.9.3"
+        versionCode 32
+        versionName "1.0.1"
         buildConfigField "boolean", "IS_NEW_ARCHITECTURE_ENABLED", isNewArchitectureEnabled().toString()
-
+        manifestPlaceholders = [ appAuthRedirectScheme: "com.earthid.app" ]
     }
 
     if (isNewArchitectureEnabled()) {
@@ -161,7 +161,14 @@ android {
         //     keyAlias 'androiddebugkey'
         //     keyPassword 'android'
         // }
-          release {
+        //   release {
+        //     storeFile file("myearthid.keystore")
+        //     storePassword "Rejolut@123"
+        //     keyAlias "myearthid"
+        //     keyPassword "Rejolut@123"
+          
+        // }
+        release {
             storeFile file("myearthid.keystore")
             storePassword "Rejolut@123"
             keyAlias "myearthid"
@@ -208,7 +215,14 @@ android {
     //     }
     // }
 
-
+// splits {
+//         abi {
+//             enable true
+//             reset()
+//             include 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64' // Specify ABIs
+//             universalApk true // Generate a universal APK
+//         }
+//     }
 
 
 dependencies {

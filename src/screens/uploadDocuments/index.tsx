@@ -33,6 +33,9 @@ import { saveDocuments } from "../../redux/actions/authenticationAction";
 import { dateTime } from "../../utils/encryption";
 import CustomPopup from "../../components/Loader/customPopup";
 import ImagePicker from "react-native-image-crop-picker";
+import { IDocumentProps } from "../uploadDocuments/VerifiDocumentScreen";
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
@@ -82,7 +85,11 @@ const UploadScreen = (props: any) => {
 
   const [isPopupVisible, setPopupVisible] = useState(false);
   const [isDocumentPickerActive, setDocumentPickerActive] = useState(false);
+ const userDetails = useAppSelector((state) => state.account);
+  const keys = useAppSelector((state) => state.user);
 
+const ssiBaseUrl = "https://ssi-test.myearth.id/api"
+          const authorizationKey = "01a41742-aa8e-4dd6-8c71-d577ac7d463c"
 
   const [popupContent, setPopupContent] = useState({
     title: '',
@@ -116,6 +123,63 @@ const UploadScreen = (props: any) => {
     setUrl(barcodeData);
   };
 
+  const formatDOB = (dob: string): string => {
+    if (typeof dob === 'string' && dob.length === 8 && /^\d{8}$/.test(dob)) {
+      const year = dob.substring(0, 4);
+      const month = dob.substring(4, 6);
+      const day = dob.substring(6, 8);
+      return `${year}/${month}/${day}`; // ✅ 09/01/1998
+    } else {
+      console.warn("Invalid DOB format:", dob);
+      return dob;
+    }
+  };
+  
+      //createAge VC
+      const generateAgeProof = async (userData:any) => {
+        try {
+          let userDOB = userData.response[0].vc.credentialSubject[0].dateOfBirth;
+          console.log('Raw DOB:', userDOB);
+          
+          const formattedDOB = formatDOB(String(userDOB));
+          console.log('Formatted DOB:', formattedDOB);
+          
+          await AsyncStorage.setItem("userDOB", String(userDOB));
+            //const signature = await createUserIdSignature(profileData);
+            const data = {"schemaName": "UserAgeSchema:1",
+            "isEncrypted": true,
+            "dependantVerifiableCredential": [
+            ],
+            "credentialSubject": {
+              "earthId":userDetails?.responseData?.earthId,
+              "dateOfBirth": userDOB
+            }
+          };
+      
+            const config = {
+                method: 'post',
+                url: `${ssiBaseUrl}/issuer/verifiableCredential`,
+                headers: {
+                    'X-API-KEY': authorizationKey,
+                    did: keys.responseData.newUserDid,
+                    publicKey: keys.responseData.generateKeyPair.publicKey,
+                    'Content-Type': 'application/json',
+                },
+                data: JSON.stringify(data),
+            };
+      console.log('AgeProofVC', config)
+            const response = await axios.request(config);
+            console.log('AgeProofVC response', response.data.data)
+            //const verifiableCredential = response.data.data.verifiableCredential;
+          
+            return response.data.data;
+      
+        } catch (error) {
+            console.log(error);
+            throw error;
+        }
+      };
+
   const fetchData = async () => {
     setisLoading(true);
     try {
@@ -123,39 +187,51 @@ const UploadScreen = (props: any) => {
       console.log("response", response);
 
       if (response) {
-        setisLoading(false);
+        
         const data = await response.json();
         console.log("Fetched data:", data);
 
+        const ageProofVcFull = await generateAgeProof(data)
+
+        await AsyncStorage.setItem("ageProofVC", JSON.stringify(ageProofVcFull));
+
+        const ageProofVC = ageProofVcFull.verifiableCredential
+        console.log('this is ageProofVC----->', ageProofVC)
+
+        setisLoading(false);
         var date = dateTime();
         var documentDetails: IDocumentProps = {
-          id: `ID_VERIFICATION${Math.random()}${"selectedDocument"}${Math.random()}`,
-          name: "Transcript VC Token",
-          path: "filePath",
-          date: date?.date,
-          time: date?.time,
-          txId: "data?.result",
-          docType: "pdf",
-          docExt: ".jpg",
-          processedDoc: "",
-          isVc: true,
-          vc: JSON.stringify({
-            name: "Transcript VC Token",
-            documentName: "Transcript VC Token",
-            path: "filePath",
-            date: date?.date,
-            time: date?.time,
-            txId: "data?.result",
-            docType: "pdf",
-            docExt: ".jpg",
-            processedDoc: "",
-            isVc: true,
-          }),
-          documentName: "",
-          docName: "",
-          base64: undefined,
-          transcriptVc: data,
-        };
+                  id: `ID_VERIFICATION${Math.random()}${"selectedDocument"}${Math.random()}`,
+                  name: "Proof of Age",
+                  path: "filePath",
+                  documentName: "Proof of Age",
+                  categoryType: "ID",
+                  date: date?.date,
+                  time: date?.time,
+                  txId: "data?.result",
+                  docType: ageProofVC?.type[1],
+                  docExt: ".jpg",
+                  processedDoc: "",
+                  isVc: true,
+                  vc: JSON.stringify({
+                    name: "Proof of Age",
+                    documentName: "Acknowledgement Token",
+                    path: "filePath",
+                    date: date?.date,
+                    time: date?.time,
+                    txId: "data?.result",
+                    docType: "pdf",
+                    docExt: ".jpg",
+                    processedDoc: "",
+                    isVc: true,
+                  }),
+                  verifiableCredential: ageProofVC,
+                  docName: "",
+                  base64: undefined,
+                  isLivenessImage: "",
+                  signature: undefined,
+                  typePDF: undefined
+                };
 
         var DocumentList = documentsDetailsList?.responseData
           ? documentsDetailsList?.responseData

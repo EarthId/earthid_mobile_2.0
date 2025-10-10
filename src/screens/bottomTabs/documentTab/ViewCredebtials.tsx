@@ -9,6 +9,7 @@ import {
   Alert,
   Pressable,
   Text,
+  InteractionManager,
 } from "react-native";
 import PDFView from "react-native-view-pdf";
 // import OpenFile from "react-native-doc-viewer";
@@ -71,8 +72,8 @@ const DocumentPreviewScreen = (props: any) => {
   // console.log("documentDetails?.base64", documentDetails?.docName);
   // console.log("documentDetails?.base64", documentDetails?.isLivenessImage);
   // console.log("documentDetailsCheck", documentDetails);
-   const s3DocFullPath = documentDetails.s3Path
-   console.log("s3DocPath", s3DocFullPath);
+  //  const s3DocFullPath = documentDetails.s3Path
+  //  console.log("s3DocPath", s3DocFullPath);
   const resources = {
     file:
       Platform.OS === "ios"
@@ -194,61 +195,88 @@ function deleteAlert() {
     // }
   };
 
-  const deleteItem = () => {
-    console.log("selectedItem?.id", selectedItem);
-    showPopup(
-      "Confirmation! ",
-      "Are you sure you want to delete this document ?",
-      [
-        {
-          text: "Yes",
-          onPress: async () => {
-            setisBottomSheetForSideOptionVisible(false);
+  const deleteItem = async () => {
+    if (!selectedItem?.id) {
+      setisBottomSheetForSideOptionVisible(false);
+      console.error("❌ Cannot delete: selectedItem is missing an ID", selectedItem);
+      return;
+    }
   
-            // Make the AWS API call to delete the document
-            try {
-              const response = await fetch("https://" + AWS_API_BASE + "documents/delete", {
-                method: "DELETE",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  credentials: GLOBALS.credentials,
-                  path: selectedItem.s3Path || selectedItem.fullPath,
-                }),
-              });
+    try {
+      console.log("selectedItem?.id", selectedItem.id);
+      setisBottomSheetForSideOptionVisible(false);
   
-              let json = await response.json();
-              console.log("Delete API response: ", json);
-  
-              // Proceed to update the local state after the API call
-              const newData = documentsDetailsList?.responseData;
-              const findIndex = newData?.findIndex((item) => item.id === selectedItem?.id);
-              if (findIndex >= 0) {
-                newData.splice(findIndex, 1);
-                dispatch(saveDocuments(newData));
-              }
-  
-              // Navigate back to the appropriate screen
+      InteractionManager.runAfterInteractions(() => {
+        setTimeout(() => {
+          showPopup(
+            "Confirmation!",
+            "Are you sure you want to delete this document?",
+            [
               {
-                HistoryParams
-                  ? props?.navigation.goBack()
-                  : props.navigation.navigate("Home");
-              }
-            } catch (error) {
-              console.error("Error deleting document:", error);
-            }
-          },
-        },
-        {
-          text: "Cancel",
-          onPress: () => {
-            console.log("Cancel Pressed!");
-            setisBottomSheetForSideOptionVisible(false);
-          },
-        },
-      ]
-    );
+                text: "Yes",
+                onPress: async () => {
+                  try {
+                    let data = new FormData();
+                    data.append("path", selectedItem.fullPath);
+  
+                    // Uncomment this for actual API call
+                    // const response = await fetch("https://" + AWS_API_BASE + "documents/delete", {
+                    //   method: "DELETE",
+                    //   headers: { "Content-Type": "application/json" },
+                    //   body: JSON.stringify({
+                    //     credentials: GLOBALS.credentials,
+                    //     path: selectedItem.s3Path || selectedItem.fullPath,
+                    //   }),
+                    // });
+                    // const json = await response.json();
+  
+                    const imageName = `${selectedItem?.docName}.${selectedItem?.docType}`;
+                    const key = `images/${imageName}`;
+  
+                    const helpArra = [...documentsDetailsList?.responseData];
+                    const findIndex = helpArra.findIndex((item) => item.id === selectedItem?.id);
+                    if (findIndex >= 0) helpArra.splice(findIndex, 1);
+  
+                    dispatch(saveDocuments(helpArra));
+                  } catch (error) {
+                    console.error("Error during document deletion:", error);
+                    showPopup("Error", "Failed to delete document. Please try again later.", [
+                      {
+                        text: "OK",
+                        onPress: () => setisBottomSheetForSideOptionVisible(false),
+                      },
+                    ]);
+                  }
+                },
+              },
+              {
+                text: "Cancel",
+                onPress: () => {
+                  console.log("Cancel Pressed!");
+                  setisBottomSheetForSideOptionVisible(false);
+                },
+                style: "cancel",
+              },
+            ]
+          );
+        }, 300); // 300ms delay for smoother popup
+      });
+  
+    } catch (err) {
+      console.error("Unexpected error while preparing delete popup:", err);
+      setisBottomSheetForSideOptionVisible(false);
+      InteractionManager.runAfterInteractions(() => {
+        setTimeout(() => {
+          showPopup("Error", "Something went wrong. Please try again.", [
+            {
+              text: "OK",
+              onPress: () => setisBottomSheetForSideOptionVisible(false),
+            },
+          ]);
+        }, 300);
+      });
+      return
+    }
   };
   
   
@@ -270,7 +298,7 @@ function deleteAlert() {
   }
   const handleUploadImage = async () => {
     setisBottomSheetForSideOptionVisible(false);
-    props.navigation.navigate("ShareQr", { selectedItem: selectedItem, s3DocFullPath });
+    props.navigation.navigate("ShareQr", { selectedItem: selectedItem });
     console.log("selectedItem", selectedItem);
   };
   const RowOption = ({ icon, title, rowAction }: any) => (
@@ -379,18 +407,20 @@ function deleteAlert() {
         isVisible={isBottomSheetForSideOptionVisible}
       >
         <View style={{ height: 180, width: "100%", paddingHorizontal: 30 }}>
+        {(selectedItem?.isVc === false || selectedItem?.isVc == null) && (
           <RowOption
             rowAction={() => editItem()}
             title={"edit"}
             icon={LocalImages.editIcon}
           />
-          {(selectedItem?.isVc === false || selectedItem?.isVc == null) && (
+        )}
+          {/* {(selectedItem?.isVc === false || selectedItem?.isVc == null) && (
       <RowOption
         rowAction={() => qrCodeModal()}
         title={"QR Code"}
         icon={LocalImages.qrcodeImage}
       />
-    )}
+    )} */}
           <RowOption
             rowAction={() => shareItem()}
             title={"share"}

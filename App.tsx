@@ -1,3 +1,4 @@
+import './src/polyfills'
 import React, { useEffect, useRef, useState } from "react";
 import { SafeAreaView, StyleSheet, View, BackHandler, Linking, AppState } from "react-native";
 import { Provider } from "react-redux";
@@ -10,6 +11,7 @@ import { Buffer } from "buffer";
 import { isEarthId } from "./src/utils/PlatFormUtils";
 import { Screens } from "./src/themes";
 import CustomPopup from "./src/components/Loader/customPopup";
+
 
 global.Buffer = Buffer;
 

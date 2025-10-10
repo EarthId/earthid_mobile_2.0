@@ -4,12 +4,14 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
+  Text,
   FlatList,
   Alert,
   Linking,
   Platform,
 } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { TextInput } from "react-native-gesture-handler";
 
 import { Screens } from "../themes/index";
 import { values } from "lodash";
@@ -22,7 +24,7 @@ import {
 } from "@react-navigation/native";
 import GenericText from "../components/Text";
 import { useAppDispatch, useAppSelector } from "../hooks/hooks";
-import { FlushData } from "../redux/actions/authenticationAction";
+import { FlushData, saveDocuments } from "../redux/actions/authenticationAction";
 import { useFetch } from "../hooks/use-fetch";
 import { EARTHID_DEV_BASE } from "../constants/URLContstants";
 import { isEarthId } from "../utils/PlatFormUtils";
@@ -31,6 +33,10 @@ import { deleteSingleBucket } from "../utils/awsSetup";
 import ReactNativeBiometrics, { BiometryTypes } from "react-native-biometrics";
 import TouchID from "react-native-touch-id";
 import CustomPopup from "../components/Loader/customPopup";
+import BottomSheet from "../components/Bottomsheet";
+import AnimatedLoader from "../components/Loader/AnimatedLoader";
+import axios from "axios";
+import CustomPopupIDV from "../components/Loader/idvPopup";
 
 const CustomDrawer = (props: any) => {
  
@@ -47,6 +53,10 @@ console.log('Drawer open 1')
     setPopupVisible(true);
   };
 
+  const [isModalIDVVisible, setIsModalIDVVisible] = useState(false);
+  const [code, setCode] = useState("");
+  const [isIdvLoading, setIDVLoading] = useState(false);
+
   const dispatch = useAppDispatch();
   const userDetails = useAppSelector((state) => state.account);
   const {
@@ -55,6 +65,9 @@ console.log('Drawer open 1')
     error,
     fetch: deleteFetch,
   } = useFetch();
+
+  const clientId = 'earthid-client-12345';
+const apiKey = '8f8e28b6-7a6a-4ad2-9ef7-b2c2d10e6a4e';
 
   const aboutList = values(ABOUT_ROUTES).map(
     ({
@@ -158,9 +171,28 @@ console.log('Drawer open 1')
     deleteFetch(paramsUrl, requestBoady, "DELETE");
     // const bucketName = `idv-sessions-${userDetails?.username.toLowerCase()}`;
     // deleteSingleBucket(bucketName);
-    await AsyncStorage.removeItem("apiCalled");
-    await AsyncStorage.removeItem("signatureKey");
-   // Alert.alert("Hiiiii=>,deleteuserData");
+  //   await AsyncStorage.removeItem("apiCalled");
+  //   await AsyncStorage.removeItem("signatureKey");
+  //  // Alert.alert("Hiiiii=>,deleteuserData");
+  //  await AsyncStorage.clear(); // Clear all AsyncStorage data
+  //   console.log("All AsyncStorage data cleared successfully.");
+
+  // Log keys before clear
+  const keysBefore = await AsyncStorage.getAllKeys();
+  console.log("🔑 Keys before clear:", keysBefore);
+
+  // Clear everything
+  await AsyncStorage.clear();
+
+  const keysAfter = await AsyncStorage.getAllKeys();
+  console.log("✅ Keys after clear:", keysAfter);
+
+// ✅ Clear Redux document list
+dispatch(saveDocuments([]));
+
+    // Dispatch action to clear DocumentList in Redux
+    // dispatch(saveDocuments([])); // Clear DocumentList by setting it to an empty array
+    // console.log("Redux DocumentList cleared.");
 
     setTimeout(() => {
       navigation.dispatch(StackActions.replace("AuthStack"));
@@ -260,6 +292,83 @@ console.log('Drawer open 1')
       //Alert.alert('hi')
     }
   };
+  
+
+  const updateFeatureFlag = async (user_id, feature_name, status, valid_years) => {
+    try {
+      const response = await axios.post('https://activate.myearth.id/feature-flags', {
+        user_id,
+        feature_name,
+        status,
+        valid_years,
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'client-id': clientId,
+          'x-api-key': apiKey, 
+        },
+      });
+  
+      console.log('Feature flag updated successfully:', response.data);
+      return response.data; // Return response for further use if needed
+    } catch (error) {
+      console.error('Error updating feature flag:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+
+  const handleVerifyCode = async () => {
+    if (!code) {
+      setIsModalIDVVisible(false);
+      Alert.alert("Error", "Please enter a code.");
+      return;
+    }
+  
+    try {
+      setIsModalIDVVisible(false);
+     // setIDVLoading(true);
+      // Call the verification API
+      const response = await axios.post(
+        "https://activate.myearth.id/verify-idv-code",
+        { code },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "client-id": clientId, // Pass client-id from the function parameter
+            "x-api-key": apiKey, // Pass x-api-key from the function parameter
+          },
+        }
+      );
+      const { status, message, user_id } = response.data;
+  
+      if (status === "success") {
+        // Code is valid, launch Veriff SDK
+        Alert.alert("Success", "Code verified.");
+  await updateFeatureFlag(user_id, "IDV", "true", "1")
+  await AsyncStorage.setItem("user_id", user_id);
+  await AsyncStorage.setItem("setIDVFlag", "true");
+        setIsModalIDVVisible(false);
+        return
+      } else {
+        // Code is invalid
+        setIsModalIDVVisible(false);
+        Alert.alert("Error", "Invalid code. Please try again.");
+        return
+      }
+    } catch (error) {
+      console.error("Verification Error:", error);
+      setIsModalIDVVisible(false);
+      Alert.alert("Error", "Failed to verify the code. Please try again later.");
+      return
+    } finally {
+     // setIDVLoading(false);
+     setIsModalIDVVisible(false);
+    }
+  };
+
+  const enterCode = async () => {
+    setIsModalIDVVisible(true)
+  }
 
   const _navigateAction = async (item: any) => {
     if (item.route === "Logout") {
@@ -285,6 +394,9 @@ console.log('Drawer open 1')
       // // deleteSingleBucket(bucketName)
       // await AsyncStorage.removeItem("apiCalled");
       deleteUser();
+    }else if (item.route === "code") {
+      
+      enterCode();
     } else if (item.route === "about") {
       Linking.openURL(
         isEarthId()
@@ -463,6 +575,49 @@ console.log('Drawer open 1')
       buttons={popupContent.buttons}
       onClose={() => setPopupVisible(false)}
     />
+
+{/* <CustomPopupIDV
+  isVisible={isModalIDVVisible}
+  title="Enter IDV Code"
+  inputValue={code}
+  onInputChange={setCode}
+  buttons={[
+    { text: "Verify", onPress: handleVerifyCode },
+  ]}
+  onClose={() => setIsModalIDVVisible(false)}
+/> */}
+
+       {/* Popup for Code Entry */}
+      <BottomSheet
+  isVisible={isModalIDVVisible}
+  onClose={() => setIsModalIDVVisible(false)}
+  height={200}
+>
+  <View style={styles.popupContainer}>
+    <TextInput
+      style={{
+        height: 50,
+        width: 300,
+        borderColor: "#ccc",
+        borderWidth: 1,
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        textAlign: "center",
+      }} // Apply styles from the `input` style below
+      placeholder="Enter Your Code"
+      value={code}
+      onChangeText={setCode}
+    />
+    <TouchableOpacity
+      style={styles.verifyButton} // Separate style for the button
+      onPress={handleVerifyCode}
+    >
+      <Text style={styles.verifyButtonText}>Verify</Text>
+    </TouchableOpacity>
+  </View>
+</BottomSheet> 
+
+      {isIdvLoading && <AnimatedLoader isLoaderVisible={isIdvLoading} loadingText="Verifying..." />}
     </View>
   );
 };
@@ -515,6 +670,37 @@ const styles = StyleSheet.create({
   closeContainer: {
     justifyContent: "center",
     alignItems: "center",
+  },
+  popupContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20, // Ensure padding for the content
+  },
+  input: {
+    height: 50, // Standard height
+    width: 300, // Fixed width
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    marginBottom: 20, // Space between input and button
+    textAlign: "center", // Center-align text
+  },
+  verifyButton: {
+    marginTop: 10,
+    backgroundColor: Screens.colors.primary, // Use your theme color
+    paddingVertical: 15, // Adjust for vertical padding
+    borderRadius: 50, // Rounded corners
+    alignItems: "center",
+    justifyContent: "center",
+    width: 300, // Match the width of the input
+  },
+  verifyButtonText: {
+    color: "#FFFFFF", // Text color
+    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center",
   },
 });
 

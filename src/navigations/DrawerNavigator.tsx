@@ -38,6 +38,13 @@ import Payment from "../screens/bottomTabs/payemnts/index"
 import BankLoginScreen from '../screens/bottomTabs/payemnts/BankLoginScreen'
 import Accountszzz from '../screens/bottomTabs/payemnts/Accounts'
 import RegisterOTP from "../screens/UploadQr/RegisterOTP";
+import Consent from "../screens/Consent";
+import GoogleDriveBackupScreen from "../screens/onboarding/newDesigns/googleDriveBackup";
+import Dev4 from "../screens/onboarding/newDesigns/dev4";
+import DropboxBackupScreen from "../screens/onboarding/newDesigns/DropboxBackupScreen";
+import Recovery from "../screens/onboarding/newDesigns/recovery";
+import GoogleDriveRestoreScreen from "../screens/onboarding/newDesigns/GoogleDriverestoreScreen";
+import DropboxRestoreScreen from "../screens/onboarding/newDesigns/DropboxRestoreScreen";
 
 const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
@@ -74,7 +81,14 @@ const dashBoardStack = {
   Payment:Payment,
   BankLoginScreen:BankLoginScreen,
   Accountszzz:Accountszzz,
-  RegisterOTP:RegisterOTP
+  RegisterOTP:RegisterOTP,
+  Consent:Consent,
+  GoogleDriveBackupScreen:GoogleDriveBackupScreen,
+  Dev4:Dev4,
+  DropboxBackupScreen:DropboxBackupScreen,
+  Recovery:Recovery,
+  GoogleDriveRestoreScreen:GoogleDriveRestoreScreen,
+  DropboxRestoreScreen:DropboxRestoreScreen
 };
 
 const tabs = {

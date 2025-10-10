@@ -180,6 +180,8 @@ const UploadQr = (props: any) => {
     });
     }
   }, [imageResponse]);
+
+
   const _handleBarCodeRead = (barCodeData: any) => {
      
     if(!isBarcodeScanned){
@@ -223,6 +225,8 @@ console.log("this is the retrieved data from qr code:", decryptedJsonObject)
  
  
   };
+
+  
   const detectedBarCodes = (barcode: any) => {
     if (getUserResponse === undefined) {
       let url = `${BASE_URL}/user/getUser?earthId=${barcode?.earthId}`;

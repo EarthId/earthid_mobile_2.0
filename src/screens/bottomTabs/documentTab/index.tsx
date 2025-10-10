@@ -1,6 +1,6 @@
 import { useIsFocused } from "@react-navigation/native";
 import { set, values } from "lodash";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   StyleSheet,
@@ -12,17 +12,18 @@ import {
   Alert,
   Button,
   ActivityIndicator,
+  InteractionManager
 } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { TouchableWithoutFeedback } from "react-native-gesture-handler";
 import Share from "react-native-share";
 import Avatar from "../../../components/Avatar";
-import BottomSheet from "../../../components/Bottomsheet";
+import CustomBottomSheet from "../../../components/Bottomsheet";
 import Card from "../../../components/Card";
 import Header from "../../../components/Header";
 import GenericText from "../../../components/Text";
-import TextInput from "../../../components/TextInput";
+import { TextInput } from "react-native-gesture-handler";
 import { LocalImages } from "../../../constants/imageUrlConstants";
 import { SCREENS } from "../../../constants/Labels";
 import { useAppDispatch, useAppSelector } from "../../../hooks/hooks";
@@ -51,6 +52,9 @@ import SuccessPopUp from "../../../components/Loader";
 import ErrorPopUp from "../../../components/Loader/errorPopup";
 import CustomPopup from "../../../components/Loader/customPopup";
 import { isEarthId } from "../../../utils/PlatFormUtils";
+import IDVNewLaunchScreen from "./IDVNewLaunchScreen";
+import CustomPopupIDV from "../../../components/Loader/idvPopup";
+import TextInputBox from "../../../components/TextInput";
 
 const resolveAssetSource = require('react-native/Libraries/Image/resolveAssetSource');
 const earthIDLogo = require('../../../../resources/images/earthidLogoBlack.png');
@@ -100,7 +104,7 @@ const DocumentScreen = ({ navigation, route }: IDocumentScreenProps) => {
   const [
     isBottomSheetForSideOptionVisible,
     setisBottomSheetForSideOptionVisible,
-  ] = useState<boolean>(false);
+  ] = useState(false);
   const [multpleDocuments, setMultipleDucuments] = useState({
     isSelected: false,
   });
@@ -117,14 +121,27 @@ const DocumentScreen = ({ navigation, route }: IDocumentScreenProps) => {
   const [successResponse, setsuccessResponse] = useState(false);
   const [errorResponse, seterrorResponse] = useState(false);
   const [reload, setReload] = useState(false);
-  const [sdkStatus, setsdkStatus] = useState(false);
+  const [sdkStatus, setSdkStatus] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [isModalIDVVisible, setIsModalIDVVisible] = useState(false);
+  const [code, setCode] = useState("");
+  const [isIdvLoading, setIDVLoading] = useState(false);
 
+  const [isLaunchVisible, setIsLaunchVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [isPopupVisibleIDV, setPopupVisibleIDV] = useState(false);
   const [isPopupVisible, setPopupVisible] = useState(false);
 const [popupContent, setPopupContent] = useState({
   title: '',
   message: '',
   buttons: []
 });
+
+
+
+const clientId = 'earthid-client-12345';
+const apiKey = '8f8e28b6-7a6a-4ad2-9ef7-b2c2d10e6a4e';
 
   const userDetails = useAppSelector((state) => state.account);
   const keys = useAppSelector((state) => state.user);
@@ -143,14 +160,27 @@ const [popupContent, setPopupContent] = useState({
     useState<boolean>(false);
   const [isBottomSheetForShare, setIsBottomSheetForShare] =
     useState<boolean>(false);
+
+
+    const selectedItemRef = useRef<any>(null);
+
+    useEffect(() => {
+      if (isPopupVisible) {
+        console.log("Popup is now visible", isPopupVisible);
+      }
+    }, [isPopupVisible]);
+
   const _rightIconOnPress = async (selecteArrayItem: any) => {
-    setselectedDocuments(selecteArrayItem);
+    selectedItemRef.current = selecteArrayItem;
+   // setselectedDocuments(selecteArrayItem);
     setselectedItem(selecteArrayItem);
     setisBottomSheetForSideOptionVisible(true);
     console.log('I have selected the 3 dots:', selecteArrayItem.docName)
-    await getFullPath(selecteArrayItem.docName)
+   // await getFullPath(selecteArrayItem.docName)
     
   };
+
+
   const _shareIconPress = (selecteArrayItem: any) => {
     setselectedItem(selecteArrayItem);
     setisBottomSheetForSideOptionVisible(true);
@@ -252,6 +282,30 @@ const [popupContent, setPopupContent] = useState({
     return null;
   }
 
+  // Function to call the verify API
+  const verifyCode = async () => {
+    try {
+      const response = await fetch("http://192.168.1.34:3027/verify-idv-code", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ code: verificationCode }),
+      });
+
+      if (response.status === 200) {
+        Alert.alert("Success", "Code verified successfully!");
+        setSdkStatus(true); // Set flag to true
+        setIsModalIDVVisible(false); // Close the modal
+       await veriffSdkLaunch(); // Call the SDK function
+      } else {
+        Alert.alert("Error", "Invalid or expired code. Please try again.");
+      }
+    } catch (error) {
+      console.error("Verification failed:", error);
+      Alert.alert("Error", "An error occurred during verification. Please try again.");
+    }
+  };
 
   const uploadToS3 = async (base64: any, category: any, name: any, type: any) => {
     if (category === "ID") { category = "Identification"; }
@@ -382,7 +436,7 @@ const [popupContent, setPopupContent] = useState({
     setselectedDocuments(item);
     setdocumentsDetailsList({ ...documentsDetailsList });
     console.log('Item docname is:', item.docName)
-    await getFullPath(item.docName)
+   // await getFullPath(item.docName)
   };
   function convertTimeToAmPmFormat(timeString: {
     split: (arg0: string) => [any, any];
@@ -417,9 +471,14 @@ const [popupContent, setPopupContent] = useState({
     return timeA - timeB;
   }
 
-  const showPopup = (title, message, buttons) => {
-    setPopupContent({ title, message, buttons });
-    setPopupVisible(true);
+  const showPopup = (title: any, message: any, buttons: any) => {
+    console.log("selectedItem?.id1----");
+  
+    // Update state first
+   setPopupContent({ title, message, buttons });
+   setPopupVisible(true); // <- move this up
+  
+  
   };
 
   const _renderItem = ({ item, index }: any) => {
@@ -436,9 +495,9 @@ const [popupContent, setPopupContent] = useState({
           isCheckBoxEnable ? () => _selectTigger(item) : async () => {
  //openDoc(item)
  console.log('Item docname is:', item.docName)
-const s3DocFullPath =  await getFullPath(item.docName)
- console.log('This is the s3 path for view cred page:', s3DocFullPath)
- navigation.navigate("ViewCredential", { documentDetails: item, s3DocFullPath })
+//const s3DocFullPath =  await getFullPath(item.docName)
+ //console.log('This is the s3 path for view cred page:', s3DocFullPath)
+ navigation.navigate("ViewCredential", { documentDetails: item })
           }
          
         }
@@ -684,52 +743,91 @@ const s3DocFullPath =  await getFullPath(item.docName)
   };
 
 
-  const deleteItem = () => {
-    showPopup(
-      "Confirmation!",
-      "Are you sure you want to delete this document?",
-      [
-        {
-          text: "Yes",
-          onPress: async () => {
-            let data = new FormData();
-            data.append("path", selectedItem.fullPath);
+  const deleteItem = async () => {
+    if (!selectedItem?.id) {
+      setisBottomSheetForSideOptionVisible(false);
+      console.error("❌ Cannot delete: selectedItem is missing an ID", selectedItem);
+      return;
+    }
   
-            const response = await fetch("https://" + AWS_API_BASE + "documents/delete", {
-              method: "DELETE",
-              headers: {
-                "Content-Type": "application/json",
+    try {
+      console.log("selectedItem?.id", selectedItem.id);
+      setisBottomSheetForSideOptionVisible(false);
+  
+      InteractionManager.runAfterInteractions(() => {
+        setTimeout(() => {
+          showPopup(
+            "Confirmation!",
+            "Are you sure you want to delete this document?",
+            [
+              {
+                text: "Yes",
+                onPress: async () => {
+                  try {
+                    let data = new FormData();
+                    data.append("path", selectedItem.fullPath);
+  
+                    // Uncomment this for actual API call
+                    // const response = await fetch("https://" + AWS_API_BASE + "documents/delete", {
+                    //   method: "DELETE",
+                    //   headers: { "Content-Type": "application/json" },
+                    //   body: JSON.stringify({
+                    //     credentials: GLOBALS.credentials,
+                    //     path: selectedItem.s3Path || selectedItem.fullPath,
+                    //   }),
+                    // });
+                    // const json = await response.json();
+  
+                    const imageName = `${selectedItem?.docName}.${selectedItem?.docType}`;
+                    const key = `images/${imageName}`;
+  
+                    const helpArra = [...documentsDetailsList?.responseData];
+                    const findIndex = helpArra.findIndex((item) => item.id === selectedItem?.id);
+                    if (findIndex >= 0) helpArra.splice(findIndex, 1);
+  
+                    dispatch(saveDocuments(helpArra));
+                  } catch (error) {
+                    console.error("Error during document deletion:", error);
+                    showPopup("Error", "Failed to delete document. Please try again later.", [
+                      {
+                        text: "OK",
+                        onPress: () => setisBottomSheetForSideOptionVisible(false),
+                      },
+                    ]);
+                  }
+                },
               },
-              body: JSON.stringify({
-                credentials: GLOBALS.credentials,
-                path: selectedItem.s3Path || selectedItem.fullPath,
-              }),
-            });
-            let json = await response.json();
-            console.log(json);
+              {
+                text: "Cancel",
+                onPress: () => {
+                  console.log("Cancel Pressed!");
+                  setisBottomSheetForSideOptionVisible(false);
+                },
+                style: "cancel",
+              },
+            ]
+          );
+        }, 300); // 300ms delay for smoother popup
+      });
   
-            setisBottomSheetForSideOptionVisible(false);
-            const imageName: any = selectedItem?.docName + "." + selectedItem?.docType;
-            const key = `images/${imageName}`;
-  
-            const helpArra = [...documentsDetailsList?.responseData];
-            const findIndex = helpArra?.findIndex((item) => item.id === selectedItem?.id);
-            findIndex >= -1 && helpArra?.splice(findIndex, 1);
-  
-            dispatch(saveDocuments(helpArra));
-          },
-        },
-        {
-          text: "Cancel",
-          onPress: () => {
-            console.log("Cancel Pressed!");
-            setisBottomSheetForSideOptionVisible(false);
-          },
-          style: "cancel",
-        }
-      ]
-    );
+    } catch (err) {
+      console.error("Unexpected error while preparing delete popup:", err);
+      setisBottomSheetForSideOptionVisible(false);
+      InteractionManager.runAfterInteractions(() => {
+        setTimeout(() => {
+          showPopup("Error", "Something went wrong. Please try again.", [
+            {
+              text: "OK",
+              onPress: () => setisBottomSheetForSideOptionVisible(false),
+            },
+          ]);
+        }, 300);
+      });
+      return
+    }
   };
+  
+  
   
   // const deleteItem = () => {
   //   console.log("selectedItem?.id", selectedItem);
@@ -817,9 +915,25 @@ const s3DocFullPath =  await getFullPath(item.docName)
           [
             {
               text: 'Photo ID',
-              onPress: () => {
+              onPress: async () => {
                 console.log("Document Data-----------------------------------");
-                veriffSdkLaunch();
+                // Retrieve the value of `setIDVFlag` from AsyncStorage
+    const idvFlag = await AsyncStorage.getItem("setIDVFlag");
+   // await AsyncStorage.setItem("setIDVFlag", "false");
+    // Check if the flag is true
+    if (idvFlag === "true") {
+    //const user_id =  await AsyncStorage.getItem("user_id");
+      // Launch Veriff SDK
+      await AsyncStorage.setItem("sdkStatus", "false"); 
+     // veriffSdkLaunch(user_id);
+    setIsLaunchVisible(true)
+// setIsModalIDVVisible(true);
+    } else {
+      // Show the IDV modal
+      await AsyncStorage.setItem("sdkStatus", "false"); 
+     // setIsLaunchVisible(true)
+    setIsModalIDVVisible(true);
+    }
               },
             },
             {
@@ -861,22 +975,72 @@ const s3DocFullPath =  await getFullPath(item.docName)
   // //       );
   //     }
 
+  const updateFeatureFlag = async (user_id, feature_name, status, valid_years) => {
+    try {
+      const response = await axios.post('https://activate.myearth.id/feature-flags', {
+        user_id,
+        feature_name,
+        status,
+        valid_years,
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          "client-id": clientId, 
+            "x-api-key": apiKey,
+        },
+      });
+  
+      console.log('Feature flag updated successfully:', response.data);
+      return response.data; // Return response for further use if needed
+    } catch (error) {
+      console.error('Error updating feature flag:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+
+  const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 
       const veriffSdkLaunch = async () => {
+        setIsLoading(true);
+        let user_id = await AsyncStorage.getItem("user_id");
 
+        if (!user_id && userDetails?.responseData?.earthId) {
+          user_id = userDetails.responseData.earthId;
+        }
+        
+        console.log("Resolved user_id:", user_id);
+console.log('Entered the veriff launch')
             const sessionRes = await createVerification()
 
+            
+           // Alert.alert("Alert1", "Created Veriff's session");
+                // Properly displaying sessionRes
+          //  Alert.alert("Alert2", JSON.stringify(sessionRes, null, 2));
+          setIsLoading(false)
+          await delay(1000);
+          setIsLaunchVisible(false);
+
+          await delay(1000); // Waits for 2 seconds
+    console.log('Added delay of 2 secs');
+
             if(sessionRes.status=="success"){
-              const sessionUrl = sessionRes.verification.url
-              const sessionId = sessionRes.verification.id
+            //  Alert.alert("Alert3", "Session success");
+                    const sessionUrl = sessionRes.verification.url
+                    const sessionId = sessionRes.verification.id
+                
+                  //  Alert.alert("Alert4", `Session ID: ${sessionId}\nSession URL: ${sessionUrl}`);
 
              // setsdkStatus(true)
          // const sdkStatusString = sdkStatus? 'true':'false'
          // console.log('SdkStatus from document screen1:', sdkStatus, sdkStatusString)
               await AsyncStorage.setItem("sdkStatus", "true");
+
+              
           
               var result = await VeriffSdk.launchVeriff({
                 sessionUrl: sessionUrl,
+                customIntroScreen: true,
                 branding: {
                   logo: resolveAssetSource(isEarthId() ? earthIDLogo : globalIDLogo), // see alternative options for logo below
                   //background: '#fffff',
@@ -940,9 +1104,9 @@ const s3DocFullPath =  await getFullPath(item.docName)
   console.log("Media Image", getImage)
   
   
-  await uploadToS3(getImage, "ID", "ID Document", ".jpg");
-  s3fullPath = `cognito/${GLOBALS.awsID}/Identification/ID Document.jpg`;
-  console.log('fullPath----------------:', s3fullPath);
+ // await uploadToS3(getImage, "ID", "ID Document", ".jpg");
+ // s3fullPath = `cognito/${GLOBALS.awsID}/Identification/ID Document.jpg`;
+ // console.log('fullPath----------------:', s3fullPath);
   
   // Extracting data from the person object
   const personData: { [key: string]: string } = {};
@@ -1004,9 +1168,14 @@ const s3DocFullPath =  await getFullPath(item.docName)
   
   let ageProofVC
   if(userDOB!==null){
-  ageProofVC = await generateAgeProof(userDOB)
-  await AsyncStorage.setItem("ageProofVC", JSON.stringify(ageProofVC));
+    const ageProofVcFull = await generateAgeProof(userDOB)
+    await AsyncStorage.setItem("ageProofVC", JSON.stringify(ageProofVcFull));
+    ageProofVC = ageProofVcFull.verifiableCredential
+    console.log('this is ageProofVC----->', ageProofVC)
   }
+
+  const idvVc = await generateIdvProof(user_id, uploadDocResponseData.document.type.value, uploadDocResponseData.decisionScore)
+  console.log('This is idvVc',idvVc)
   //  const docFrontBase64 = await urlToBase64(documentFront.url)
   //  console.log(docFrontBase64);
   
@@ -1051,7 +1220,7 @@ const s3DocFullPath =  await getFullPath(item.docName)
           // name: selectedDocument,
           documentName: selectedDocument,
           path: filePath,
-          s3Path: s3fullPath,
+          //s3Path: s3fullPath,
           date: date?.date,
           time: date?.time,
           //txId: data?.result,
@@ -1077,9 +1246,9 @@ const s3DocFullPath =  await getFullPath(item.docName)
           : [];
         var documentDetails1: IDocumentProps = {
           id: `ID_VERIFICATION${Math.random()}${"selectedDocument"}${Math.random()}`,
-          name: "Proof of age",
+          name: "Proof of Age",
           path: "filePath",
-          documentName: "Proof of age",
+          documentName: "Proof of Age",
           categoryType: "ID",
           date: date?.date,
           time: date?.time,
@@ -1089,7 +1258,7 @@ const s3DocFullPath =  await getFullPath(item.docName)
           processedDoc: "",
           isVc: true,
           vc: JSON.stringify({
-            name: "Proof of age",
+            name: "Proof of Age",
             documentName: "Acknowledgement Token",
             path: "filePath",
             date: date?.date,
@@ -1111,8 +1280,47 @@ const s3DocFullPath =  await getFullPath(item.docName)
         var DocumentList = documentsDetailsList?.responseData
           ? documentsDetailsList?.responseData
           : [];
+
+          var documentDetails2: IDocumentProps = {
+            id: `ID_VERIFICATION${Math.random()}${"selectedDocument"}${Math.random()}`,
+            name: "Proof of IDV",
+            path: "filePath",
+            documentName: "Proof of IDV",
+            categoryType: "ID",
+            date: date?.date,
+            time: date?.time,
+            txId: "data?.result",
+            docType: idvVc?.type[1],
+            docExt: ".jpg",
+            processedDoc: "",
+            isVc: true,
+            vc: JSON.stringify({
+              name: "Proof of IDV",
+              documentName: "Acknowledgement Token",
+              path: "filePath",
+              date: date?.date,
+              time: date?.time,
+              txId: "data?.result",
+              docType: "pdf",
+              docExt: ".jpg",
+              processedDoc: "",
+              isVc: true,
+            }),
+            verifiableCredential: idvVc,
+            docName: "",
+            base64: undefined,
+            isLivenessImage: "",
+            signature: undefined,
+            typePDF: undefined
+          };
+    
+          var DocumentList = documentsDetailsList?.responseData
+            ? documentsDetailsList?.responseData
+            : [];
+
         DocumentList.push(documentDetails);
        DocumentList.push(documentDetails1);
+       DocumentList.push(documentDetails2);
        // 
         dispatch(saveDocuments(DocumentList));
        
@@ -1121,7 +1329,7 @@ const s3DocFullPath =  await getFullPath(item.docName)
         setTimeout(async () => {
           setsuccessResponse(false);
           const item = await AsyncStorage.getItem("flow");
-          
+          await AsyncStorage.setItem("setIDVFlag", "false");
             // generateVc()
            // navigation.navigate("Documents");
             
@@ -1152,6 +1360,7 @@ const s3DocFullPath =  await getFullPath(item.docName)
               // throw new Error('An error occurred during image validation');
             }
             }else{
+            //  Alert.alert("Alert5", JSON.stringify(sessionRes, null, 2));
               seterrorResponse(true)
               throw new Error('An error occurred during image validation');
             }
@@ -1301,13 +1510,57 @@ const s3DocFullPath =  await getFullPath(item.docName)
                   console.log('AgeProofVC response', response.data.data.verifiableCredential)
                   //const verifiableCredential = response.data.data.verifiableCredential;
                 
-                  return response.data.data.verifiableCredential;
+                  return response.data.data;
             
               } catch (error) {
                   console.log(error);
                   throw error;
               }
             };
+
+
+            const generateIdvProof = async (userId: any, idType: any, score: any) => {
+              try {
+                  const data = {
+                      schemaName: "IDVProofSchema:1",
+                      isEncrypted: true,
+                      dependantVerifiableCredential: [],
+                      credentialSubject: {
+                          earthId: userDetails?.responseData?.earthId,
+                          userId: userId,
+                          idType: idType, // Example, replace with dynamic value if needed
+                          score: score, // Example, replace with a calculated or dynamic score
+                          timestamp: new Date().toISOString(), // Current timestamp in ISO format
+                          metadata: JSON.stringify({
+                              source: "IDVProvider",
+                              details: "Additional metadata information"
+                          }) // Example JSON metadata
+                      }
+                  };
+          
+                  const config = {
+                      method: 'post',
+                      url: `${ssiBaseUrl}/issuer/verifiableCredential`,
+                      headers: {
+                          'X-API-KEY': authorizationKey,
+                          did: keys.responseData.newUserDid,
+                          publicKey: keys.responseData.generateKeyPair.publicKey,
+                          'Content-Type': 'application/json',
+                      },
+                      data: JSON.stringify(data),
+                  };
+          
+                  console.log('IDVProofVC Request', config);
+                  const response = await axios.request(config);
+                  console.log('IDVProofVC Response', response.data.data.verifiableCredential);
+          
+                  return response.data.data.verifiableCredential;
+              } catch (error) {
+                  console.error('Error generating IDVProof:', error);
+                  throw error;
+              }
+          };
+          
       
 
   const _keyExtractor = ({ path }: any) => path.toString();
@@ -1356,7 +1609,65 @@ const s3DocFullPath =  await getFullPath(item.docName)
   };
   
   
+  const handleVerifyCode = async () => {
+    if (!code) {
+      setIsModalIDVVisible(false);
+      Alert.alert("Error", "Please enter a code.");
+      return;
+    }
   
+    try {
+      setIsModalIDVVisible(false);
+     // setIDVLoading(true);
+      // Call the verification API
+      const response = await axios.post(
+        "https://activate.myearth.id/verify-idv-code",
+        { code },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "client-id": clientId, // Pass client-id from the function parameter
+            "x-api-key": apiKey, // Pass x-api-key from the function parameter
+          },
+        }
+      );
+      const { status, message, user_id } = response.data;
+  
+      if (status === "success") {
+        // Code is valid, launch Veriff SDK
+        console.log("Verification Successful");
+        //Alert.alert("Success", "Code verified. Launching Veriff SDK...");
+  await updateFeatureFlag(user_id, "IDV", "true", "1")
+  await AsyncStorage.setItem("user_id", user_id);
+  await AsyncStorage.setItem("setIDVFlag", "true");
+        
+   // setIDVLoading(false);
+InteractionManager.runAfterInteractions(() => {
+  setTimeout(() => {
+    setIsLaunchVisible(true);
+  }, 300); // 300ms delay for smoother transition
+});
+//console.log("BottomSheet isVisible", );
+//console.log("Launch screen isVisible", isLaunchVisible);
+       //await veriffSdkLaunch(user_id);
+      } else {
+        // Code is invalid
+       // setIDVLoading(false);
+        setIsModalIDVVisible(false);
+        Alert.alert("Error", "Invalid code. Please try again.");
+        return;
+      }
+    } catch (error) {
+      console.error("Verification Error:", error);
+    //  setIDVLoading(false);
+      setIsModalIDVVisible(false);
+      Alert.alert("Error", "Failed to verify the code. Please try again later.");
+      return;
+    } finally {
+    //  setIDVLoading(false);
+      setIsModalIDVVisible(false);
+    }
+  };
   
 
   const getItemsForSection = (data: any[]) => {
@@ -1460,7 +1771,7 @@ const s3DocFullPath =  await getFullPath(item.docName)
 
 {documentsDetailsList?.responseData &&
           documentsDetailsList?.responseData?.length > 0 ? (
-            <TextInput
+            <TextInputBox
               leftIcon={LocalImages.searchImage}
               style={{
                 container: styles.textInputContainer,
@@ -1566,38 +1877,43 @@ const s3DocFullPath =  await getFullPath(item.docName)
             </View>
           )}
 
-          <BottomSheet
+          <CustomBottomSheet
             onClose={() => setisBottomSheetForSideOptionVisible(false)}
             height={230}
             isVisible={isBottomSheetForSideOptionVisible}
           >
             <View style={{ height: 180, width: "100%", paddingHorizontal: 30 }}>
+            {(selectedItem?.isVc === false || selectedItem?.isVc == null) && (
               <RowOption
                 rowAction={() => editItem()}
                 title={"edit"}
                 icon={LocalImages.editIcon}
               />
-                {(selectedItem?.isVc === false || selectedItem?.isVc == null) && (
+            )}
+                {/* {(selectedItem?.isVc === false || selectedItem?.isVc == null) && (
       <RowOption
         rowAction={() => qrCodeModal()}
         title={"QR Code"}
         icon={LocalImages.qrcodeImage}
       />
-    )}
+    )} */}
               <RowOption
                 rowAction={() => shareItem()}
                 title={"share"}
                 icon={LocalImages.shareImage}
               />
               <RowOption
-                rowAction={() => deleteItem()}
+                rowAction={() => {
+                  console.log("Delete option pressed");
+                  deleteItem();
+                }}
                 title={"delete"}
                 icon={LocalImages.deleteImage}
               />
             </View>
-          </BottomSheet>
+          </CustomBottomSheet>
 
-          <BottomSheet
+          <CustomBottomSheet
             onClose={() => setIsBottomSheetForShare(false)}
             height={150}
             isVisible={isBottomSheetForShare}
@@ -1609,8 +1925,8 @@ const s3DocFullPath =  await getFullPath(item.docName)
                 icon={LocalImages.shareImage}
               />
             </View>
-          </BottomSheet>
-          <BottomSheet
+          </CustomBottomSheet>
+          <CustomBottomSheet
             onClose={() => setisBottomSheetForFilterVisible(false)}
             height={150}
             isVisible={isBottomSheetForFilterVisible}
@@ -1620,7 +1936,7 @@ const s3DocFullPath =  await getFullPath(item.docName)
               <RowOption title={"By Date"} />
               <RowOption title={"By Frequency"} />
             </View>
-          </BottomSheet>
+          </CustomBottomSheet>
         </View>
       </ScrollView>
       <Modal isVisible={isModalVisible} backdropOpacity={0.5}>
@@ -1677,6 +1993,8 @@ const s3DocFullPath =  await getFullPath(item.docName)
   onHide={hideErrorPopup}
 />
 
+{
+  isPopupVisible && (
 <CustomPopup
         isVisible={isPopupVisible}
         title={popupContent.title}
@@ -1684,6 +2002,64 @@ const s3DocFullPath =  await getFullPath(item.docName)
         buttons={popupContent.buttons}
         onClose={() => setPopupVisible(false)}
       />
+  )
+}
+
+
+{/* <CustomPopupIDV
+  isVisible={isModalIDVVisible}
+  title="Enter IDV Code"
+  inputValue={code}
+  onInputChange={setCode}
+  buttons={[
+    { text: "Verify", onPress: handleVerifyCode },
+  ]}
+  onClose={() => setIsModalIDVVisible(false)}
+/> */}
+
+
+      
+   {/* IDV Verification Popup */}
+   { isLaunchVisible && (
+    <IDVNewLaunchScreen 
+    isVisible={isLaunchVisible} 
+    isLoading={isLoading} 
+    onClose={() => setIsLaunchVisible(false)} 
+    onStartVerification={veriffSdkLaunch} />   
+   )}
+   
+   {/* Popup for Code Entry */}
+   <CustomBottomSheet
+  isVisible={isModalIDVVisible}
+  onClose={() => setIsModalIDVVisible(false)}
+  height={200}
+>
+  <View style={styles.popupContainer}>
+    <TextInput
+      style={{
+        height: 50,
+        width: 300,
+        borderColor: "#ccc",
+        borderWidth: 1,
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        textAlign: "center",
+      }} // Apply styles from the `input` style below
+      placeholder="Enter Your Code"
+      value={code}
+      onChangeText={setCode}
+    />
+    <TouchableOpacity
+      style={styles.verifyButton} // Separate style for the button
+      onPress={handleVerifyCode}
+    >
+      <Text style={styles.verifyButtonText}>Verify</Text>
+    </TouchableOpacity>
+  </View>
+</CustomBottomSheet>
+
+
+      {isIdvLoading && <AnimatedLoader isLoaderVisible={isIdvLoading} loadingText="Verifying..." />}
 
     </View>
   );
@@ -1795,6 +2171,63 @@ const styles = StyleSheet.create({
     width: 200,
     height: 150,
     resizeMode: "contain",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    width: "80%",
+    padding: 20,
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 15,
+  },
+  // input: {
+  //   width: "100%",
+  //   padding: 10,
+  //   borderWidth: 1,
+  //   borderColor: "#ccc",
+  //   borderRadius: 5,
+  //   marginBottom: 15,
+  // },
+  popupContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20, // Ensure padding for the content
+  },
+  input: {
+    height: 50, // Standard height
+    width: 300, // Fixed width
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    marginBottom: 20, // Space between input and button
+    textAlign: "center", // Center-align text
+  },
+  verifyButton: {
+    marginTop: 10,
+    backgroundColor: Screens.colors.primary, // Use your theme color
+    paddingVertical: 15, // Adjust for vertical padding
+    borderRadius: 50, // Rounded corners
+    alignItems: "center",
+    justifyContent: "center",
+    width: 300, // Match the width of the input
+  },
+  verifyButtonText: {
+    color: "#FFFFFF", // Text color
+    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center",
   },
 });
 

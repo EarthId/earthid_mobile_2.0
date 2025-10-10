@@ -27,7 +27,7 @@ const Register = ({ navigation }: IHomeScreenProps) => {
           isBack
           letfIconPress={() => navigation.goBack()}
           isLogoAlone={true}
-          headingText="Service"
+          headingText="Backup & Recovery"
           linearStyle={styles.linearStyle}
           containerStyle={{
             iconStyle: {
@@ -65,7 +65,7 @@ const Register = ({ navigation }: IHomeScreenProps) => {
                 },
               ]}
             >
-              Service
+              Backup & Recovery
             </GenericText>
             <GenericText
               style={[
@@ -78,13 +78,13 @@ const Register = ({ navigation }: IHomeScreenProps) => {
                 },
               ]}
             >
-              Please Choose an option
+              Please select the desired action
             </GenericText>
             <Button
               selected={false}
               disabled={false}
               onPress={() => {
-                navigation.navigate("Dev2");
+                navigation.navigate("Recovery");
               }}
               style={{
                 buttonContainer: {
@@ -102,7 +102,7 @@ const Register = ({ navigation }: IHomeScreenProps) => {
                 selected={false}
                 disabled={false
                 }
-                onPress={() => {}}
+                onPress={() => {navigation.navigate("Dev4");}}
                 style={{
                   buttonContainer: {
                     opacity: 1,

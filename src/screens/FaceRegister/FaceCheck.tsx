@@ -32,6 +32,8 @@ import DocumentMask from "../uploadDocuments/DocumentMask";
 import { EARTHID_DEV_BASE } from "../../constants/URLContstants";
 import { useFetch } from "../../hooks/use-fetch";
 import CustomPopup from "../../components/Loader/customPopup";
+import { saveDocuments } from "../../redux/actions/authenticationAction";
+//import { saveDocuments } from "../../redux/actions/authenticationAction";
 
 const rnBiometrics = new ReactNativeBiometrics();
 
@@ -161,14 +163,32 @@ const LivenessCameraScreen = (props: any) => {
 
   const deleteuserData = async () => {
     const paramsUrl = `${EARTHID_DEV_BASE}/user/deleteUser?earthId=${userDetails?.responseData?.earthId}&publicKey=${userDetails?.responseData?.publicKey}`;
-    await AsyncStorage.removeItem("passcode");
-    await AsyncStorage.removeItem("fingerprint");
-    await AsyncStorage.removeItem("FaceID");
-    await AsyncStorage.removeItem("pageName");
-    await AsyncStorage.removeItem("profilePic");
-    await AsyncStorage.removeItem("vcCred");
-    await AsyncStorage.removeItem("apiCalled");
-    await AsyncStorage.removeItem("signatureKey");
+    // await AsyncStorage.removeItem("passcode");
+    // await AsyncStorage.removeItem("fingerprint");
+    // await AsyncStorage.removeItem("FaceID");
+    // await AsyncStorage.removeItem("pageName");
+    // await AsyncStorage.removeItem("profilePic");
+    // await AsyncStorage.removeItem("vcCred");
+    // await AsyncStorage.removeItem("apiCalled");
+    // await AsyncStorage.removeItem("signatureKey");
+    // await AsyncStorage.clear(); // Clear all AsyncStorage data
+    // console.log("All AsyncStorage data cleared successfully.");
+    // Log keys before clear
+    const keysBefore = await AsyncStorage.getAllKeys();
+    console.log("🔑 Keys before clear:", keysBefore);
+
+    // Clear everything
+    await AsyncStorage.clear();
+
+    const keysAfter = await AsyncStorage.getAllKeys();
+    console.log("✅ Keys after clear:", keysAfter);
+
+    // ✅ Clear Redux document list
+  dispatch(saveDocuments([]));
+
+// Dispatch action to clear DocumentList in Redux
+// dispatch(saveDocuments([])); // Clear DocumentList by setting it to an empty array
+// console.log("Redux DocumentList cleared.");
 
     const requestBoady = {
       publicKey: userDetails?.responseData?.publicKey,

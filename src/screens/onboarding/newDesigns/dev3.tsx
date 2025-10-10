@@ -156,7 +156,7 @@ const Register = ({ navigation }: IHomeScreenProps) => {
                 selected={false}
                 disabled={false
                 }
-                onPress={() => {}}
+                onPress={() => {navigation.navigate("Dev4");}}
                 style={{
                   buttonContainer: {
                     opacity: 1,

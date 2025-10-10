@@ -123,9 +123,9 @@ console.log('BankProofVC', config)
     setLoading(true);
     var documentDetails: IDocumentProps = {
       id: `ID_VERIFICATION${Math.random()}${"selectedDocument"}${Math.random()}`,
-      name: "Proof of funds",
+      name: "Proof of Funds",
       path: "filePath",
-      documentName: "Proof of funds",
+      documentName: "Proof of Funds",
       categoryType: "Finance",
       date: date?.date,
       time: date?.time,
@@ -151,7 +151,7 @@ console.log('BankProofVC', config)
         setLoading(false);
         showPopup(
           "Success",
-          "Proof of funds successfully generated.",
+          "Proof of Funds successfully generated.",
           [{ text: "OK", onPress: () => setPopupVisible(false) }]
         );
         props.navigation.navigate("Documents");

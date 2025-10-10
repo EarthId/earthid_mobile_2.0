@@ -68,6 +68,7 @@ export const LocalImages = {
   portugalflag: require("../../resources/images/portugal.png"),
   menudot: require("../../resources/images/menu-dots.png"),
   scanbarcodeImg: require('../../resources/images/scan-barcodeImg.png'),
+  codeIcon: require('../../resources/images/codeIcon.png'),
   //categories
   CATEGORIES: {
     travelImage: require("../../resources/images/travel.png"),

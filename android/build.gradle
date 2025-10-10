@@ -40,32 +40,32 @@ buildscript {
 
 
 allprojects {
-    repositories {
-           google()
-            mavenLocal()
+  repositories {
+    google()
+    mavenLocal()
+    // jcenter() is deprecated, but if you need it for legacy deps keep it:
     jcenter()
-        //    maven { url 'https://jitpack.io' } //added
-        maven {
-            // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
-            url("$rootDir/../node_modules/react-native/android")
-        }
-            maven { url "https://jitpack.io" }
-        maven {
-            // Android JSC is installed from npm
-            url("$rootDir/../node_modules/jsc-android/dist")
-        }
-       maven { url "https://cdn.veriff.me/android/" } //veriff
-        mavenCentral {
-            // We don't want to fetch react-native from Maven Central as there are
-            // older versions over there.
-            content {
-                excludeGroup "com.facebook.react"
-            }
-        }
-     
-        maven { url 'https://www.jitpack.io' }
+    maven { url "https://jitpack.io" }
+    maven { url("$rootDir/../node_modules/react-native/android") }
+    maven { url("$rootDir/../node_modules/jsc-android/dist") }
+    maven { url "https://cdn.veriff.me/android/" }
+    mavenCentral {
+      content { excludeGroup "com.facebook.react" }
     }
+  }
+
+  // 🔧 Redirect dead artifact to a live fork
+  configurations.all {
+    resolutionStrategy.eachDependency { details ->
+      if (details.requested.group == 'com.github.barteksc' &&
+          details.requested.name == 'android-pdf-viewer') {
+        details.useTarget 'com.github.mhiew:android-pdf-viewer:3.2.0-beta.1'
+        details.because 'barteksc:2.8.2 is no longer published; use maintained fork'
+      }
+    }
+  }
 }
+
 
 apply plugin: 'com.google.android.gms.strict-version-matcher-plugin'
 apply plugin: "com.facebook.react.rootproject"

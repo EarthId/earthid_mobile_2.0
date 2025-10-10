@@ -16,12 +16,14 @@ import SmoothPinCodeInput from "react-native-smooth-pincode-input";
 import { LocalImages } from "../../../../constants/imageUrlConstants";
 import { StackActions, useRoute } from "@react-navigation/native";
 import GenericText from "../../../../components/Text";
-import { useAppSelector } from "../../../../hooks/hooks";
+import { useAppDispatch, useAppSelector } from "../../../../hooks/hooks";
 import { deleteSingleBucket } from "../../../../utils/awsSetup";
 import { isEarthId } from "../../../../utils/PlatFormUtils";
 import { EARTHID_DEV_BASE } from "../../../../constants/URLContstants";
 import { useFetch } from "../../../../hooks/use-fetch";
 import CustomPopup from "../../../../components/Loader/customPopup";
+import { saveDocuments } from "../../../../redux/actions/authenticationAction";
+//import { saveDocuments } from "../../../../redux/actions/authenticationAction";
 
 interface IHomeScreenProps {
   navigation?: any;
@@ -30,7 +32,7 @@ interface IHomeScreenProps {
 
 const PasswordCheck = ({ navigation }: IHomeScreenProps) => {
   const route = useRoute();
-
+  
   const types = route?.params?.type;
 
   const userDetails = useAppSelector((state) => state.account);
@@ -53,16 +55,37 @@ const PasswordCheck = ({ navigation }: IHomeScreenProps) => {
     setPopupVisible(true);
   };
 
+  const dispatch = useAppDispatch();
+
   const deleteuserData = async () => {
     const paramsUrl = `${EARTHID_DEV_BASE}/user/deleteUser?earthId=${userDetails?.responseData?.earthId}&publicKey=${userDetails?.responseData?.publicKey}`;
-    await AsyncStorage.removeItem("passcode");
-    await AsyncStorage.removeItem("fingerprint");
-    await AsyncStorage.removeItem("FaceID");
-    await AsyncStorage.removeItem("pageName");
-    await AsyncStorage.removeItem("profilePic");
-    await AsyncStorage.removeItem("vcCred");
-    await AsyncStorage.removeItem("apiCalled");
-    await AsyncStorage.removeItem("signatureKey");
+    // await AsyncStorage.removeItem("passcode");
+    // await AsyncStorage.removeItem("fingerprint");
+    // await AsyncStorage.removeItem("FaceID");
+    // await AsyncStorage.removeItem("pageName");
+    // await AsyncStorage.removeItem("profilePic");
+    // await AsyncStorage.removeItem("vcCred");
+    // await AsyncStorage.removeItem("apiCalled");
+    // await AsyncStorage.removeItem("signatureKey");
+    // await AsyncStorage.clear(); // Clear all AsyncStorage data
+    // console.log("All AsyncStorage data cleared successfully.");
+
+    // Log keys before clear
+    const keysBefore = await AsyncStorage.getAllKeys();
+    console.log("🔑 Keys before clear:", keysBefore);
+
+    // Clear everything
+    await AsyncStorage.clear();
+
+    const keysAfter = await AsyncStorage.getAllKeys();
+    console.log("✅ Keys after clear:", keysAfter);
+
+// ✅ Clear Redux document list
+dispatch(saveDocuments([]));
+
+    // Dispatch action to clear DocumentList in Redux
+    // dispatch(saveDocuments([])); // Clear DocumentList by setting it to an empty array
+    // console.log("Redux DocumentList cleared.");
 
     const requestBoady = {
       publicKey: userDetails?.responseData?.publicKey,

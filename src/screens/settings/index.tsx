@@ -31,7 +31,11 @@ const CustomDrawer = (props: any) => {
   const _navigateAction = (item: any) => {
     if (item.CARD === "language") {
       setLanguageVisible(true);
-    } else {
+    } else if (item.CARD === "consent") {
+      props.navigation.navigate("Consent");
+    } else if (item.CARD === "backup") {
+      props.navigation.navigate("Dev");
+    }else {
       props.navigation.navigate("UpdateAuthentication");
     }
   };
